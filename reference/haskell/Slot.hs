@@ -52,8 +52,8 @@ fieldElemsPerCell cfg = (_cellSize cfg + 30) `div` 31
 --
 -- > template SampleAndProveV1( nCells, nFieldElemsPerCell, nSamples ) { ... }
 --
-circomMainComponentV1 :: FilePath -> SlotConfig -> IO ()
-circomMainComponentV1 circomFile slotCfg = do
+circomMainComponentV1 :: SlotConfig -> FilePath -> IO ()
+circomMainComponentV1 slotCfg circomFile = do
 
   let params =          show (_nCells           slotCfg)
              ++ ", " ++ show (fieldElemsPerCell slotCfg)

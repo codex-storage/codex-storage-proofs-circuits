@@ -13,10 +13,10 @@ import qualified ZK.Algebra.Curves.BN128.Fr.Mont as Fr
 
 --------------------------------------------------------------------------------
 
-samplingTest :: FilePath -> IO ()
-samplingTest fpath = do
+samplingTest :: SlotConfig -> FilePath -> IO ()
+samplingTest slotCfg fpath = do
   let entropy = 123456789 :: Fr
-  input <- calculateCircuitInput exSlotCfg entropy
+  input <- calculateCircuitInput slotCfg entropy
   exportCircuitInput fpath input
 
 --------------------------------------------------------------------------------
@@ -59,15 +59,18 @@ calculateCircuitInput slotCfg entropy = do
 -- | Export the inputs of the storage proof circuits in JSON format,
 -- which @circom@ can consume.
 --
+-- NOTE: large numbers (field elements) must be encoded as JSON strings,
+-- not numbers, as Javascript cannot handle large numbers!
+--
 exportCircuitInput :: FilePath -> CircuitInput -> IO ()
 exportCircuitInput fpath input = do
   h <- openFile fpath WriteMode
-  hPutStrLn h $ "{ \"entropy\":  " ++ show (_entropy  input)
-  hPutStrLn h $ ", \"slotRoot\": " ++ show (_slotRoot input)
+  hPutStrLn h $ "{ \"entropy\":  " ++ show (show (_entropy  input))
+  hPutStrLn h $ ", \"slotRoot\": " ++ show (show (_slotRoot input))
   hPutStrLn h $ ", \"cellData\": " 
-  hPrintListOfLists h (_cellData input)
+  hPrintListOfLists h ((map.map) show $ _cellData input)
   hPutStrLn h $ ", \"merklePaths\": " 
-  hPrintListOfLists h (_merklePaths input)
+  hPrintListOfLists h ((map.map) show $ _merklePaths input)
   hPutStrLn h $ "}"
   hClose h
 
@@ -86,7 +89,7 @@ hPrintList' h indentation xs = do
   hPutStrLn h (indentation False ++ "]")
 
 hPrintList :: Show a => Handle -> Int -> [a] -> IO ()
-hPrintList h indentBy xs = hPrintList' h (\_ -> indent indentBy) xs
+hPrintList h indentBy xs = hPrintList' h (\_ -> indent indentBy) $ xs
 
 hPrintListOfLists :: Show a => Handle -> [[a]] -> IO ()
 hPrintListOfLists h xss = 
