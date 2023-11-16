@@ -45,7 +45,7 @@ Library
   Default-Language:    Haskell2010
   Default-Extensions:  CPP, BangPatterns
 
-  Hs-Source-Dirs:      .
+  Hs-Source-Dirs:      src
 
   ghc-options:         -fwarn-tabs -fno-warn-unused-matches -fno-warn-name-shadowing -fno-warn-unused-imports
 
