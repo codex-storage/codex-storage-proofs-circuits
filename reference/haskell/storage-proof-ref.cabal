@@ -34,13 +34,14 @@ Library
                        zikkurat-algebra == 0.0.1
 
   Exposed-Modules:     Poseidon2
+                       Sampling
+                       Slot
+                       TestVectors
                        Poseidon2.Example
                        Poseidon2.Merkle
                        Poseidon2.Permutation
                        Poseidon2.RoundConsts
                        Poseidon2.Sponge
-                       Sampling
-                       Slot
 
   Default-Language:    Haskell2010
   Default-Extensions:  CPP, BangPatterns
