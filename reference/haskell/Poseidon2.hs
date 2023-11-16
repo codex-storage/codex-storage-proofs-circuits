@@ -7,7 +7,7 @@ module Poseidon2
   , calcMerkleRoot , calcMerkleTree
   , MerkleTree(..) , depthOf , merkleRootOf
   , MerkleProof(..) , extractMerkleProof , extractMerkleProof_ , reconstructMerkleRoot
-  , compression
+  , compressPair, keyedCompressPair
   , permutation
   ) 
   where
