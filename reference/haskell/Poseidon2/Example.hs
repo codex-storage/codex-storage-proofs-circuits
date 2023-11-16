@@ -1,5 +1,5 @@
 
-module Ref.Poseidon2.Example where
+module Poseidon2.Example where
 
 --------------------------------------------------------------------------------
 

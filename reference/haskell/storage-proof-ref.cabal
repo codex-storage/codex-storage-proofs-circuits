@@ -1,0 +1,68 @@
+Cabal-Version:       2.4
+Name:                storage-proof-ref
+Version:             0.0
+Synopsis:            Reference implementation for storage proof creation
+
+Description:         Reference implementation for storage proof creation
+
+--License:           MIT OR Apache-2.0
+License-files:       LICENSE-MIT
+                     LICENSE-APACHEv2
+
+Author:              Balazs Komuves
+Copyright:           (c) 2023 Status Research & Development GmbH
+Maintainer:          balazs (at) status (dot) im
+Homepage:            https://github.com/codex-storage/codex-storage-proofs-circuits
+
+Stability:           Experimental
+Category:            Cryptography
+Tested-With:         GHC == 8.6.5, GHC == 9.6.2
+Build-Type:          Simple
+
+source-repository head
+  type:                git
+  location:            https://github.com/codex-storage/codex-storage-proofs-circuits
+
+--------------------------------------------------------------------------------
+
+Library
+
+  Build-Depends:       base >= 4 && < 5, 
+                       bytestring >= 0.9 && < 2,
+                       array >= 0.5 && < 1, 
+                       random >= 1.1 && < 1.5, 
+                       zikkurat-algebra == 0.0.1
+
+  Exposed-Modules:     Poseidon2
+                       Poseidon2.Example
+                       Poseidon2.Merkle
+                       Poseidon2.Permutation
+                       Poseidon2.RoundConsts
+                       Poseidon2.Sponge
+                       Sampling
+                       Slot
+
+  Default-Language:    Haskell2010
+  Default-Extensions:  CPP, BangPatterns
+
+  Hs-Source-Dirs:      .
+
+  ghc-options:         -fwarn-tabs -fno-warn-unused-matches -fno-warn-name-shadowing -fno-warn-unused-imports
+
+--------------------------------------------------------------------------------
+
+Executable storage-proof-reference
+                      
+  main-is:             testMain.hs
+
+  Hs-Source-Dirs:      cli
+                       
+  build-depends:       base >= 4 && < 5, 
+                       storage-proof-ref >= 0.0 && < 0.2
+
+  Default-Language:    Haskell2010
+  Default-Extensions:  CPP, BangPatterns
+
+--------------------------------------------------------------------------------
+
+
