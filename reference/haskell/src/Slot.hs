@@ -99,18 +99,35 @@ calcCellHashes cfg = do
 
 --------------------------------------------------------------------------------
 
+{-
 -- | Split bytestring into smaller pieces
 splitByteString :: Int -> ByteString -> [ByteString]
 splitByteString k = go where
   go bs 
     | B.null bs  = []
     | otherwise  = B.take k bs : go (B.drop k bs)
+-}
+
+-- | Split bytestring into samller pieces, applying the @10*@ padding strategy.
+--
+-- That is, always add a single @0x01@ byte, and then add the necessary
+-- number (in the interval @[0..k-1]@) of @0x00@ bytes to be a multiple of the 
+-- given chunk length
+--
+padAndSplitByteString :: Int -> ByteString -> [ByteString]
+padAndSplitByteString k orig = go (B.snoc orig 0x01) where
+  go bs 
+    | m == 0      = []
+    | m < k       = [B.append bs (B.replicate (k-m) 0x00)]
+    | otherwise   = B.take k bs : go (B.drop k bs)
+    where
+      m = B.length bs
 
 -- | Chunk a ByteString into a sequence of field elements
 cellDataToFieldElements :: ByteString -> [Fr]
 cellDataToFieldElements rawdata = map chunkToField pieces where
   chunkSize = 31
-  pieces = splitByteString chunkSize rawdata
+  pieces = padAndSplitByteString chunkSize rawdata
 
 -- | Hash a cell
 hashCell :: ByteString -> Hash
