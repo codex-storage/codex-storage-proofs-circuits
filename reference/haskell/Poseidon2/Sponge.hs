@@ -11,7 +11,10 @@ import Poseidon2.Permutation
 
 -- | Sponge construction with rate=1 (capacity=2), zero IV and 10* padding
 sponge1 :: [Fr] -> Fr
-sponge1 input = go (0,0,0) (pad input) where
+sponge1 input = go (0,0,civ) (pad input) where
+
+  -- domain separation: capacity IV = 2^64 + 256*t + rate
+  civ = fromInteger (2^64 + 0x0301)
 
   pad :: [Fr] -> [Fr]
   pad (x:xs) = x : pad xs
@@ -25,7 +28,10 @@ sponge1 input = go (0,0,0) (pad input) where
 
 -- | Sponge construction with rate=2 (capacity=1), zero IV and 10* padding
 sponge2 :: [Fr] -> Fr
-sponge2 input = go (0,0,0) (pad input) where
+sponge2 input = go (0,0,civ) (pad input) where
+
+  -- domain separation: capacity IV = 2^64 + 256*t + rate
+  civ = fromInteger (2^64 + 0x0302)
 
   pad :: [Fr] -> [Fr]
   pad (x:y:rest) = x : y : pad rest
