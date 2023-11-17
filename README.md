@@ -8,18 +8,20 @@ This document describes the storage proof system for the Codex 2023 Q4 MVP.
 Setup
 -----
 
-We assume that a user dataset is split into `nSlots` number of uniformly sized
-"slots" of size `slotSize`, for example 100 GB (for the MVP we may chose
-a smaller size). The slots of the same dataset are spread over different 
-storage nodes, but a single storage node can hold several slots (belonging to
-different datasets). The slots themselves can be optionally erasure coded,
-but this does not change the proof system, only the robustness of it.
+We assume that a user dataset is split into `nSlots` number of (not necessarily 
+uniformly sized) "slots" of size `slotSize`, for example 10 GB or 100 GB (for 
+the MVP we may chose a smaller sizes). The slots of the same dataset are spread 
+over different storage nodes, but a single storage node can hold several slots 
+(of different sizes, and belonging to different datasets). The slots themselves
+can be optionally erasure coded, but this does not change the proof system, only 
+the robustness of it.
 
-We assume the slots are split into `nCells` number of uniformly sized
-"cells" of size `cellSize`, for example 512 bytes. We don't in general assume 
-that these numbers of powers of two, though in practice `nCells` will be probably
-a power of two, and in fact the initial implementation assumes this. 
-
+We assume the slots are split into `nCells` number of fixed, uniformly sized
+"cells" of size `cellSize`, for example 2048 bytes. Note that `nCells` can
+depend on the particular slot. For the initial version, we assume 
+that these numbers are powers of two (especially `nCells`). Worst case we
+can just pad the data to achieve this (it probably makes more sense to pad
+_before_ the erasure coding, even though this increases the computational cost).
 Note that we can simply calculate:
 
     nCells = slotSize / cellSize
@@ -27,8 +29,8 @@ Note that we can simply calculate:
 We then hash each cell (using the sponge construction with Poseidon2; see below
 for details), and build a binary Merkle tree over this hashes. This has depth
 `d = ceil[ log2(nCells) ]`. Note: if `nCells` is not a power of two, then we
-have to add dummy hashes. The exact conventions for doing this is to be determined 
-later.
+have to add dummy hashes. The exact conventions for doing this are described 
+below.
 
 The Merkle root of the cells of a single slot is called the "slot root", and
 is denoted by `slotRoot`.
@@ -73,36 +75,43 @@ into 31 bytes "hash chunks", then encode these as field elements. We will use
 little-endian byte convention to get from 31 bytes to the _standard form_ of 
 a field element, that is, the 31 little-endian bytes encode the number `a`
 where `0 <= a < 2^248 < r < 2^254` is the standard representation of a field element.
-For padding the last field element just use zero bytes.
+For padding the last field element use the so-called `10*` strategy: That means
+_always_ append a single `0x01` byte, and then pad with the minimum number
+of zero bytes so that the final padded length is a multiple of 31.
 
-It's probably better to choose the standard form, because most standard tools
-like circom use that, even though choosing the Montgomery form would be somewhat
-more efficient (but the difference is very small, the hashing will dominate).
+It's probably better to choose the standard representation of field elements, 
+because most standard tools like circom use that; even though choosing the 
+Montgomery form would be a tiny bit more efficient (but the difference is very
+small, the hashing will dominate the costs anyway).
 
 ### Compression and sponge
 
 Poseidon2 offers essentially two API functions: a so called _compression function_
 which takes 2 field elements and returns 1; this can be used to build binary
-Merkle trees.
+Merkle trees. And a more complex _sponge construction_ for linear hashing,
+which can hash an arbitrary sequence of field elements into a single (or several) 
+field element(s). 
 
-The more complex _sponge_ can hash an arbitrary sequence of field elements into
-a single (or several) field element(s).
+The sponge can have versions with different "rate" parameters, and the compression
+function is more generally a parametric family of functions, which I call a _keyed 
+compression function_.
 
-While we can always use a Merkle tree instead of the sponge, if the data to be
-hashed does not correspond to a power of two number of field elements, then
-the sponge could be more efficient (up to a factor of two). Also we can use
-the sponge construction with `rate=2`, which in practice means twice as fast.
+While we could always use a Merkle tree instead of the sponge, in the sponge
+construction we can use `rate = 2` with a target of 128-bit security level, which 
+in practice means twice as fast; so we should use that for hashing the cells.
 
-Questions: 
+Conventions to decide:
 
-- should we use the [SAFE sponge](https://hackmd.io/bHgsH6mMStCVibM_wYvb2w) 
-  or the original sponge?
-- should we use rate 1 or 2? It seems that even `rate=2` gives an approximately
-  128 bit of collision and preimage security, per standard cryptographic
-  assumptions; and higher rate means faster hashing.
+- padding (especially important for `rate > 1`)
+- conversion from bytes to field elements (see above)
+- initialization vector
 
-I propose to use the SAFE convention and `rate=2`. However the current 
-implementation uses Poseidon1-style sponge.
+We propose again the padding strategy `10*` (but here we are talking about field
+elements, not bytes!), and an initialization vector `(0,0,domSep)` where `domSep`
+(short for "domain separation"), the initial value for the "capacity" part of the 
+sponge, is defined as 
+
+    domSep := 2^64 + 256*t + rate
 
 
 Parameters
@@ -117,7 +126,9 @@ cost if the cell size is 1024-2048 bytes (34-67 field elements).
 If we use 2048 byte cells, then `nCells = 8192*8192 = 2^26` gives a slot size
 of 128 Gb, which looks like a good compromise target slot size (we don't want
 it to be too small, because then the number of slot proofs per node will be
-too big; but we don't want it to be too big either, because that's inflexible)
+too big; but we don't want it to be too big either, because that's inflexible).
+The maximum slot size with cell size of 2048 and a depth of 32 (corresponding
+to 2D erasure code is of size `2^16 x 2^16`, see below) is `2^(32+11) = 2^43 = 8 Tb`.
 
 ### 2D erasure coding
 
@@ -154,6 +165,8 @@ To be able to do this, we need to compute:
 - the indices of the selected cells (or Merkle leaves)
 - the hashes of the selected cells
 - the Merkle paths from these hashes up to the slot root (Merkle proofs)
+- the number of cells in the slot (this is because of our particular Merkle 
+  tree construction, but we will need it anyway to compute the indices)
 - the (single) Merkle path from the slot root to the dataset root.
 
 To be able to sample randomly, we need some external source of entropy; for
@@ -169,7 +182,8 @@ We propose the following function to compute the indices of the selected cells:
     idx = H( entropy | slotRoot | counter ) `mod` nCells
 
 where `counter` iterates over the range `[1..nSamples]`, `H` is our hash
-function, and `|` denotes concatenation.
+function (right now Poseidon2 sponge with `rate = 2` and `10*` padding strategy), 
+and `|` denotes concatenation (in this case the input is just 3 field elements).
 
 
 Circuit
@@ -180,13 +194,16 @@ the samples in single slot; then use Groth16 to prove it.
 
 Public inputs:
 
-- dataset root
-- entropy
-- slot index: which slot of the dataset we are talking about; `[1..nSlots]`
+- slot or dataset root (depending on what we decide on)
+- number of cells in the slot (or possibly its logarithm; right now `nCells` 
+  is assumed to be a power of two)
+- entropy (public randomness)
+- in case of using dataset root, also the slot index: 
+  which slot of the dataset we are talking about; `[1..nSlots]`
 
 Private inputs:
 
-- the slot root
+- the slot root (if it was not a public input)
 - the underlying data of the cells, as sequences of field elements
 - the Merkle paths from the leaves (the cell hashes) to the slot root
 - the Merkle path from the slot root to the dataset root
@@ -203,4 +220,44 @@ Computation:
 Note that given the index of a leaf, we can compute the left-right zig-zag
 of the corresponding Merkle path, simply by looking at the binary decomposition.
 So the Merkle paths will only consist lists of hashes.
+
+
+Merkle tree conventions
+-----------------------
+
+We use the same "safe" Merkle tree construction across the codebase. This uses
+a "keyed compression function", where the key depends on:
+
+- whether we are in the bottommost layer or not
+- whether the node we are dealing with has 1 or 2 children (odd or even node)
+
+These are two bits, encoded as numbers in the set `{0,1,2,3}` (the lowest bit is
+1 if it's the bottom layer, 0 otherwise; the next bit is 1 if it's an odd node,
+0 if even node). Furthermore:
+
+- in case of an odd node with leaf `x`, we apply the compression to the pair `(x,0)`
+- in case of a singleton input (the whole Merkle tree is built on a single field
+  element), we also apply one compression
+- the keyed compression is defined as applying the permutation to the triple 
+  `(x,y,key)`, and extracting the first component of the resulting triple
+
+In case of SHA256, we could use a compression functions of the form
+`SHA256(x|y|key)`, where `x,y` are 32 byte long hashes, and `key` is a single
+byte. Since SHA256 already does some padding internally, this has the same
+cost as computing just `SHA256(x|y)`.
+
+Network blocks vs. cells
+------------------------
+
+The networking layer uses 64kb "blocks", while the proof layer uses 2kb "cells".
+To make these compatible, the way we define a hash of a 64kb block is:
+
+- split the 64kb data into 32 smaller 2kb cells;
+- hash these cells (with Poseidon2 sponge, rate=2, and `10*` padding);
+- build a depth 5 complete binary Merkle tree on those hashes, with the above
+  conventions. The resulting Merkle root will be the hash of the 64kb block.
+
+Then we build a big Merkle tree on these block hashes, again with the above
+conventions, resulting in the slot root.
+
 
