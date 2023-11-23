@@ -1,10 +1,12 @@
 
+{-# LANGUAGE BangPatterns, StrictData #-}
 module Slot where
 
 --------------------------------------------------------------------------------
 
 import Data.Bits
 import Data.Word
+import Data.Array
 
 import Data.ByteString (ByteString)
 import qualified Data.ByteString       as B
@@ -14,12 +16,30 @@ import Control.Monad
 import System.IO
 
 import Poseidon2
+import Misc
 
 --------------------------------------------------------------------------------
 
-type Seed    = Int
-type CellIdx = Int
-type Hash    = Fr
+type Seed     = Int
+type CellIdx  = Int
+type BlockIdx = Int
+type Hash     = Fr
+
+newtype CellData  = CellData  { fromCellData  :: ByteString }
+newtype BlockData = BlockData { fromBlockData :: ByteString }
+
+instance Show CellData  where show (CellData  bs) = "CellData<"  ++ show (B.length bs) ++ ">"
+instance Show BlockData where show (BlockData bs) = "BlockData<" ++ show (B.length bs) ++ ">"
+
+mkCellData :: SlotConfig -> ByteString -> CellData
+mkCellData cfg bs = if B.length bs == _cellSize cfg 
+  then CellData bs
+  else error $ "mkCellData: invalid cell size: " ++ show (B.length bs)
+
+mkBlockData :: SlotConfig -> ByteString -> BlockData
+mkBlockData cfg bs = if B.length bs == _blockSize cfg 
+  then BlockData bs
+  else error $ "mkBlockData: invalid block size: " ++ show (B.length bs)
 
 data DataSource
   = SlotFile FilePath
@@ -27,20 +47,33 @@ data DataSource
   deriving Show
 
 data SlotConfig = MkSlotCfg
-  { _cellSize :: Int           -- ^ cell size in bytes
-  , _nCells   :: Int           -- ^ number of cells per slot (should be power of two)
-  , _nSamples :: Int           -- ^ how many cells we sample
-  , _dataSrc  :: DataSource    -- ^ slot data source
+  { _cellSize  :: Int           -- ^ cell size in bytes (eg. 2048)
+  , _blockSize :: Int           -- ^ block size in bytes (eg. 65536)
+  , _nCells    :: Int           -- ^ number of cells per slot (should be power of two)
+  , _nSamples  :: Int           -- ^ how many cells we sample
+  , _dataSrc   :: DataSource    -- ^ slot data source
   }
   deriving Show
+
+cellsPerBlock :: SlotConfig -> Int
+cellsPerBlock cfg = case divMod (_blockSize cfg) (_cellSize cfg) of
+  (q,0) -> if q>1 then q else error "cells per block must be at least 2"
+  _     -> error "block size is not divisible by the cell size"
+
+blocksPerSlot :: SlotConfig -> Int
+blocksPerSlot cfg = case divMod (_nCells cfg) (cellsPerBlock cfg) of
+  (q,0) -> if q>1 then q else error "blocks per slot must be at least 2"
+  _     -> error "slot size is not divisible by the block size"
+
 
 -- | Example slot configuration
 exSlotCfg :: SlotConfig
 exSlotCfg = MkSlotCfg
-  { _cellSize = 256
-  , _nCells   = 1024
-  , _nSamples = 20
-  , _dataSrc  = FakeData 12345
+  { _cellSize  = 256
+  , _blockSize = 4096
+  , _nCells    = 1024
+  , _nSamples  = 20
+  , _dataSrc   = FakeData 12345
   }
 
 fieldElemsPerCell :: SlotConfig -> Int
@@ -68,15 +101,24 @@ circomMainComponentV1 slotCfg circomFile = do
 --------------------------------------------------------------------------------
 -- * load data
 
-genFakeCell :: SlotConfig -> Seed -> CellIdx -> ByteString
-genFakeCell cfg seed1 seed2 = B.pack list where
-  list = go (_cellSize cfg) 1 
-  go :: Int -> Int -> [Word8]
+genFakeCell :: SlotConfig -> Seed -> CellIdx -> CellData
+genFakeCell cfg seed idx = (mkCellData cfg $ B.pack list) where
+  list = go (fromIntegral $ _cellSize cfg) 1 
+  seed1 = fromIntegral seed :: Word64
+  seed2 = fromIntegral idx  :: Word64
+  go :: Word64 -> Word64 -> [Word8]
   go 0   _     = []
   go cnt state = fromIntegral state' : go (cnt-1) state' where
     state' = state*state + seed1*state + (seed2 + 17)
 
-loadCellData :: SlotConfig -> CellIdx -> IO ByteString
+genFakeBlock :: SlotConfig -> Seed -> BlockIdx -> BlockData
+genFakeBlock cfg seed blockIdx = (mkBlockData cfg $ B.concat$ map fromCellData cells) where
+  k = cellsPerBlock cfg
+  a =  k *  blockIdx
+  b =  k * (blockIdx + 1) - 1
+  cells = [ genFakeCell cfg seed j | j<-[a..b] ]
+
+loadCellData :: SlotConfig -> CellIdx -> IO CellData
 loadCellData cfg idx = case _dataSrc cfg of
   FakeData seed  -> return $ genFakeCell cfg seed idx
   SlotFile fname -> do
@@ -84,10 +126,21 @@ loadCellData cfg idx = case _dataSrc cfg of
     hSeek h AbsoluteSeek (fromIntegral (_cellSize cfg) * fromIntegral idx)
     bs <- B.hGet h (_cellSize cfg)
     hClose h
-    return bs
+    return (mkCellData cfg bs)
+
+loadBlockData :: SlotConfig -> BlockIdx -> IO BlockData
+loadBlockData cfg idx = case _dataSrc cfg of
+  FakeData seed  -> return $ genFakeBlock cfg seed idx
+  SlotFile fname -> do
+    h <- openBinaryFile fname ReadMode
+    hSeek h AbsoluteSeek (fromIntegral (_blockSize cfg) * fromIntegral idx)
+    bs <- B.hGet h (_blockSize cfg)
+    hClose h
+    return (mkBlockData cfg bs)
 
 --------------------------------------------------------------------------------
 
+{-
 calcSlotTree :: SlotConfig -> IO MerkleTree
 calcSlotTree cfg = calcMerkleTree <$> calcCellHashes cfg
 
@@ -96,17 +149,106 @@ calcCellHashes cfg = do
   forM [0..(_nCells cfg - 1)] $ \idx -> do
     cell <- loadCellData cfg idx 
     return (hashCell cell)
+-}
 
 --------------------------------------------------------------------------------
 
-{-
--- | Split bytestring into smaller pieces
+-- | Split bytestring into smaller pieces, no padding
 splitByteString :: Int -> ByteString -> [ByteString]
 splitByteString k = go where
   go bs 
     | B.null bs  = []
     | otherwise  = B.take k bs : go (B.drop k bs)
--}
+
+splitBlockToCells :: SlotConfig -> BlockData -> [CellData]
+splitBlockToCells cfg (BlockData blockdata) = 
+  map CellData (splitByteString (_cellSize cfg) blockdata)
+
+calcBlockTree :: SlotConfig -> BlockIdx -> IO MerkleTree
+calcBlockTree cfg idx = do
+  block <- loadBlockData cfg idx
+  let cells = splitBlockToCells cfg block
+  let cellHashes = map (hashCell cfg) cells
+  let tree = calcMerkleTree cellHashes
+  return tree
+
+calcAllBlockTrees :: SlotConfig -> IO (Array Int MerkleTree)
+calcAllBlockTrees cfg 
+  = listArray (0,n-1) <$> (forM [0..n-1] $ \idx -> calcBlockTree cfg idx)
+  where
+    n = blocksPerSlot cfg
+
+--------------------------------------------------------------------------------
+
+data SlotTree = MkSlotTree
+  { _miniTrees :: Array Int MerkleTree     -- ^ block trees
+  , _bigTree   :: MerkleTree               -- ^ the tree over the block hashes
+  }
+
+slotTreeRoot :: SlotTree -> Hash
+slotTreeRoot = merkleRootOf . _bigTree
+
+calcSlotTree :: SlotConfig -> IO SlotTree
+calcSlotTree cfg = do
+  minitrees <- calcAllBlockTrees cfg
+  let bigtree = calcMerkleTree $ map merkleRootOf $ elems minitrees
+  return $ MkSlotTree minitrees bigtree
+
+extractCellProof :: SlotConfig -> SlotTree -> CellIdx -> [Hash]
+extractCellProof cfg slotTree cellIdx = final where
+  (blockIdx, withinBlockIdx) = cellIdx `divMod` (cellsPerBlock cfg)
+  blockTree = (_miniTrees slotTree) ! blockIdx
+  proof1 = extractMerkleProof blockTree           withinBlockIdx
+  proof2 = extractMerkleProof (_bigTree slotTree) blockIdx
+  final  = _merklePath proof1 ++ _merklePath proof2
+
+checkCellProof :: SlotConfig -> SlotTree -> CellIdx -> Hash -> [Hash] -> Bool
+checkCellProof cfg slotTree cellIdx cellHash path 
+  | logK + logM /= length path  = error "checkCellProof: incorrect Merkle path length"
+  | 2^logK /= k                 = error "checkCellProof: non-power-of-two number of cells per blocks"
+  | otherwise                   = reSlotHash == slotTreeRoot slotTree
+  where
+    k = cellsPerBlock cfg
+    m = blocksPerSlot cfg
+    logK = ceilingLog2 (fromIntegral k)
+    logM = ceilingLog2 (fromIntegral m)
+
+    blockIdx       = shiftR cellIdx logK
+    inBlockCellIdx = cellIdx .&. (k-1)
+
+    smallProof = MkMerkleProof
+      { _leafIndex   = inBlockCellIdx
+      , _leafData    = cellHash
+      , _merklePath  = take logK path
+      , _dataSize    = k
+      }
+    bigProof = MkMerkleProof
+      { _leafIndex   = blockIdx
+      , _leafData    = blockHash
+      , _merklePath  = drop logK path
+      , _dataSize    = m
+      }
+
+    blockHash  = reconstructMerkleRoot smallProof  
+    reSlotHash = reconstructMerkleRoot bigProof
+
+--------------------------------------------------------------------------------
+
+-- | Hash a cell
+hashCell :: SlotConfig -> CellData -> Hash
+hashCell cfg (CellData rawdata) 
+  | B.length rawdata /= _cellSize cfg  = error "hashCell: invalid cell data size"
+  | otherwise                          = hashCell_ rawdata
+
+hashCell_ :: ByteString -> Hash
+hashCell_ rawdata = sponge2 (cellDataToFieldElements $ CellData rawdata) 
+
+--------------------------------------------------------------------------------
+
+-- | A 31-byte long chunk
+newtype Chunk 
+  = Chunk ByteString 
+  deriving Show
 
 -- | Split bytestring into samller pieces, applying the @10*@ padding strategy.
 --
@@ -114,33 +256,32 @@ splitByteString k = go where
 -- number (in the interval @[0..k-1]@) of @0x00@ bytes to be a multiple of the 
 -- given chunk length
 --
-padAndSplitByteString :: Int -> ByteString -> [ByteString]
+padAndSplitByteString :: Int -> ByteString -> [Chunk]
 padAndSplitByteString k orig = go (B.snoc orig 0x01) where
   go bs 
     | m == 0      = []
-    | m < k       = [B.append bs (B.replicate (k-m) 0x00)]
-    | otherwise   = B.take k bs : go (B.drop k bs)
+    | m < k       = [Chunk $ B.append bs (B.replicate (k-m) 0x00)]
+    | otherwise   = (Chunk $ B.take k bs) : go (B.drop k bs)
     where
       m = B.length bs
 
 -- | Chunk a ByteString into a sequence of field elements
-cellDataToFieldElements :: ByteString -> [Fr]
-cellDataToFieldElements rawdata = map chunkToField pieces where
+cellDataToFieldElements :: CellData -> [Fr]
+cellDataToFieldElements (CellData rawdata) = map chunkToField pieces where
   chunkSize = 31
   pieces = padAndSplitByteString chunkSize rawdata
 
--- | Hash a cell
-hashCell :: ByteString -> Hash
-hashCell rawdata = sponge2 (cellDataToFieldElements rawdata) 
-
-chunkToField :: ByteString -> Fr
-chunkToField chunk
-  | B.length chunk <= 31  = fromInteger (chunkToIntegerLE chunk)
-  | otherwise             = error "chunkToField: chunk is too big (expecting at most 31 bytes)"
+chunkToField :: Chunk -> Fr
+chunkToField chunk@(Chunk bs)
+  | l == 31  = fromInteger (chunkToIntegerLE chunk)
+  | l <  31  = error "chunkToField: chunk is too small (expecting exactly 31 bytes)"
+  | l >  31  = error "chunkToField: chunk is too big (expecting exactly 31 bytes)"
+  where 
+    l = B.length bs
 
 -- | Interpret a ByteString as an integer (little-endian)
-chunkToIntegerLE :: ByteString -> Integer
-chunkToIntegerLE chunk = go (B.unpack chunk) where
+chunkToIntegerLE :: Chunk -> Integer
+chunkToIntegerLE (Chunk chunk) = go (B.unpack chunk) where
   go []     = 0
   go (w:ws) = fromIntegral w + shiftL (go ws) 8
 

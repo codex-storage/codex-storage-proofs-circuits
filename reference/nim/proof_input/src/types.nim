@@ -8,8 +8,8 @@ export types
 
 #-------------------------------------------------------------------------------
 
-const cellSize*      : int = 2048                        # size of the cells we prove
-const blockSize*     : int = 65536                       # size of the network block
+const cellSize*      : int = 128     # 2048         # size of the cells we prove
+const blockSize*     : int = 4096    # 65536        # size of the network block
 
 const cellsPerBlock* : int = blockSize div cellSize
 

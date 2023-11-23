@@ -33,15 +33,16 @@ Library
                        random >= 1.1 && < 1.5, 
                        zikkurat-algebra == 0.0.1
 
-  Exposed-Modules:     Poseidon2
-                       Sampling
+  Exposed-Modules:     Sampling
                        Slot
-                       TestVectors
+                       Poseidon2
                        Poseidon2.Example
                        Poseidon2.Merkle
                        Poseidon2.Permutation
                        Poseidon2.RoundConsts
                        Poseidon2.Sponge
+                       Misc
+                       TestVectors
 
   Default-Language:    Haskell2010
   Default-Extensions:  CPP, BangPatterns

@@ -10,7 +10,7 @@
 --   if it's an even node (2 children)
 --
 
-{-# LANGUAGE BangPatterns #-}
+{-# LANGUAGE BangPatterns, StrictData #-}
 module Poseidon2.Merkle where
 
 --------------------------------------------------------------------------------
@@ -54,6 +54,9 @@ depthOf :: MerkleTree -> Int
 depthOf (MkMerkleTree outer) = b-a where
   (a,b) = bounds outer
 
+treeBottomLayer :: MerkleTree -> [Fr]
+treeBottomLayer (MkMerkleTree arr) = elems (arr!0)
+
 {-
 calcMerkleTree' :: [Fr] -> [[Fr]]
 calcMerkleTree' = go where
@@ -66,7 +69,7 @@ calcMerkleTree' = go where
 calcMerkleTree' :: [Fr] -> [[Fr]]
 calcMerkleTree' input = 
   case input of
-    []  -> error "calcMerkleRoot: input is empty"
+    []  -> error "calcMerkleTree': input is empty"
     [z] -> [[keyedCompression (nodeKey BottomLayer OddNode) z 0]]
     zs  -> go layerFlags zs 
   where

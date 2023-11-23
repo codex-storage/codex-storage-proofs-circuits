@@ -1,10 +1,13 @@
 
+{-# LANGUAGE BangPatterns, StrictData #-}
 module Sampling where
 
 --------------------------------------------------------------------------------
 
 import Control.Monad
 import System.IO
+
+import qualified Data.ByteString as B
 
 import Poseidon2
 import Slot  
@@ -13,9 +16,8 @@ import qualified ZK.Algebra.Curves.BN128.Fr.Mont as Fr
 
 --------------------------------------------------------------------------------
 
-samplingTest :: SlotConfig -> FilePath -> IO ()
-samplingTest slotCfg fpath = do
-  let entropy = 123456789 :: Fr
+samplingTest :: SlotConfig -> Entropy -> FilePath -> IO ()
+samplingTest slotCfg entropy fpath = do
   input <- calculateCircuitInput slotCfg entropy
   exportCircuitInput fpath input
 
@@ -34,10 +36,11 @@ sampleCellIndex cfg entropy slotRoot counter = fromInteger idx where
 --------------------------------------------------------------------------------
 
 data CircuitInput = MkInput 
-  { _entropy     :: Entropy       -- ^ public input
-  , _slotRoot    :: Hash          -- ^ public input
-  , _cellData    :: [[Fr]]        -- ^ private input
-  , _merklePaths :: [[Fr]]        -- ^ private input
+  { _entropy      :: Entropy       -- ^ public input
+  , _slotRoot     :: Hash          -- ^ public input
+  , _cellsPerSlot :: Int           -- ^ public input
+  , _cellData     :: [[Fr]]        -- ^ private input
+  , _merklePaths  :: [[Fr]]        -- ^ private input
   }
   deriving Show
 
@@ -45,15 +48,17 @@ data CircuitInput = MkInput
 calculateCircuitInput :: SlotConfig -> Entropy -> IO CircuitInput
 calculateCircuitInput slotCfg entropy = do
   slotTree <- calcSlotTree slotCfg 
-  let slotRoot = merkleRootOf slotTree 
-  let idxs = [ sampleCellIndex slotCfg entropy slotRoot j | j <- [1..(_nSamples slotCfg)] ]
+  let !slotRoot = slotTreeRoot slotTree 
+  let !idxs = [ sampleCellIndex slotCfg entropy slotRoot j | j <- [1..(_nSamples slotCfg)] ]
+
   cellData <- forM idxs $ \idx -> (cellDataToFieldElements <$> loadCellData slotCfg idx)
-  let merklePaths = [ extractMerkleProof_ slotTree idx | idx <- idxs ]
+  let !merklePaths = [ extractCellProof slotCfg slotTree idx | idx <- idxs ]
   return $ MkInput
-    { _entropy    =  entropy
-    , _slotRoot    = slotRoot
-    , _cellData    = cellData
-    , _merklePaths = merklePaths
+    { _entropy      = entropy
+    , _slotRoot     = slotRoot
+    , _cellsPerSlot = _nCells slotCfg
+    , _cellData     = cellData
+    , _merklePaths  = merklePaths
     }
 
 -- | Export the inputs of the storage proof circuits in JSON format,
@@ -65,8 +70,9 @@ calculateCircuitInput slotCfg entropy = do
 exportCircuitInput :: FilePath -> CircuitInput -> IO ()
 exportCircuitInput fpath input = do
   h <- openFile fpath WriteMode
-  hPutStrLn h $ "{ \"entropy\":  " ++ show (show (_entropy  input))
-  hPutStrLn h $ ", \"slotRoot\": " ++ show (show (_slotRoot input))
+  hPutStrLn h $ "{ \"entropy\":  " ++ show (show (_entropy      input))
+  hPutStrLn h $ ", \"slotRoot\": " ++ show (show (_slotRoot     input))
+  hPutStrLn h $ ", \"nCells\":   " ++ show (show (_cellsPerSlot input))
   hPutStrLn h $ ", \"cellData\": " 
   hPrintListOfLists h ((map.map) show $ _cellData input)
   hPutStrLn h $ ", \"merklePaths\": " 

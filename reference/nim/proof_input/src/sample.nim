@@ -17,10 +17,10 @@ func extractLowBits[n: static int]( A: BigInt[n], k: int): uint64 =
   assert( k>0 and k<=64 )
   var r : uint64 = 0
   for i in 0..<k:
-    let b = bit[n](A, n-1-i)      # it's BIG-ENDIAN (wtf)
+    let b = bit[n](A, i)     # NOTE: the docunmentation seems to lie about the conventions here....
     let y = uint64(b)
     if (y != 0):
-      r = bitor( r, 1'u64 shl y )
+      r = bitor( r, 1'u64 shl i )
   return r
 
 func extractLowBits(fld: F, k: int): uint64 = 

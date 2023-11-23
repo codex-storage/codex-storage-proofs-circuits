@@ -48,8 +48,8 @@ when isMainModule:
   # testAllMerkleProofs(20)
 
   let fakedata = DataSource(kind: FakeData, seed: 12345)
-  let slotcfg  = SlotConfig( nCells: 128, nSamples: 3, dataSrc: fakedata)                      
+  let slotcfg  = SlotConfig( nCells: 256, nSamples: 5, dataSrc: fakedata)                      
   let entropy  = toF( 1234567 )
   let prfInput = generateProofInput(slotcfg, entropy)
-  exportProofInput( "foo.json" , prfInput )
+  exportProofInput( "json/foo.json" , prfInput )
 

@@ -5,7 +5,7 @@ module Poseidon2
   ( Fr
   , sponge1 , sponge2
   , calcMerkleRoot , calcMerkleTree
-  , MerkleTree(..) , depthOf , merkleRootOf
+  , MerkleTree(..) , depthOf , merkleRootOf , treeBottomLayer 
   , MerkleProof(..) , extractMerkleProof , extractMerkleProof_ , reconstructMerkleRoot
   , compressPair, keyedCompressPair
   , permutation

@@ -52,7 +52,7 @@ testVectorsHash = do
   forM_ [0..80] $ \n -> do
     let input = map fromIntegral [1..n] :: [Word8]
     let bs    = B.pack input
-    putStrLn $ "hash of [1.." ++ show n ++ "] :: [Byte] =  " ++ show (hashCell bs)
+    putStrLn $ "hash of [1.." ++ show n ++ "] :: [Byte] =  " ++ show (hashCell_ bs)
 
 --------------------------------------------------------------------------------
 
@@ -71,7 +71,7 @@ testVectorsMerkle = do
   forM_ [0..80] $ \n -> do
     let input = map fromIntegral [1..n] :: [Word8]
     let bs    = B.pack input
-    let flds  = cellDataToFieldElements bs
+    let flds  = cellDataToFieldElements (CellData bs)
     putStrLn $ "Merkle root of [1.." ++ show n ++ "] :: [Byte]  =  " ++ show (calcMerkleRoot flds)
 
 --------------------------------------------------------------------------------
