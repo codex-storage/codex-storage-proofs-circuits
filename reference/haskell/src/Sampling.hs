@@ -27,8 +27,8 @@ type Entropy = Fr
 
 -- | Given an entropy source, the slot root, and a counter, we compute a
 -- cell index to sample
-sampleCellIndex :: SlotConfig -> Entropy -> Hash -> Int -> Int
-sampleCellIndex cfg entropy slotRoot counter = fromInteger idx where
+sampleCellIndex :: SlotConfig -> Entropy -> Hash -> Int -> CellIdx
+sampleCellIndex cfg entropy slotRoot counter = CellIdx (fromInteger idx) where
   u   = sponge2 [entropy , slotRoot , fromIntegral counter] :: Fr
   idx = (Fr.from u) `mod` n          :: Integer
   n   = (fromIntegral $ _nCells cfg) :: Integer

@@ -10,7 +10,7 @@ smallSlotCfg = MkSlotCfg
   , _blockSize = 4096
   , _nCells    = 256
   , _nSamples  = 5
-  , _dataSrc   = FakeData 12345
+  , _dataSrc   = FakeData (Seed 12345)
   }
 
 bigSlotCfg :: SlotConfig
@@ -19,7 +19,7 @@ bigSlotCfg = MkSlotCfg
   , _blockSize = 65536
   , _nCells    = 512
   , _nSamples  = 5
-  , _dataSrc   = FakeData 666
+  , _dataSrc   = FakeData (Seed 666)
   }
 
 main :: IO ()

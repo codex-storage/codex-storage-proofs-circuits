@@ -20,10 +20,12 @@ import Misc
 
 --------------------------------------------------------------------------------
 
-type Seed     = Int
-type CellIdx  = Int
-type BlockIdx = Int
-type Hash     = Fr
+type Hash = Fr
+
+newtype Seed     = Seed     Int deriving (Eq,Show)
+newtype CellIdx  = CellIdx  Int deriving (Eq,Show)
+newtype BlockIdx = BlockIdx Int deriving (Eq,Show)
+newtype SlotIdx  = SlotIdx  Int deriving (Eq,Show)
 
 newtype CellData  = CellData  { fromCellData  :: ByteString }
 newtype BlockData = BlockData { fromBlockData :: ByteString }
@@ -73,7 +75,7 @@ exSlotCfg = MkSlotCfg
   , _blockSize = 4096
   , _nCells    = 1024
   , _nSamples  = 20
-  , _dataSrc   = FakeData 12345
+  , _dataSrc   = FakeData (Seed 12345)
   }
 
 fieldElemsPerCell :: SlotConfig -> Int
@@ -102,7 +104,7 @@ circomMainComponentV1 slotCfg circomFile = do
 -- * load data
 
 genFakeCell :: SlotConfig -> Seed -> CellIdx -> CellData
-genFakeCell cfg seed idx = (mkCellData cfg $ B.pack list) where
+genFakeCell cfg (Seed seed) (CellIdx idx) = (mkCellData cfg $ B.pack list) where
   list = go (fromIntegral $ _cellSize cfg) 1 
   seed1 = fromIntegral seed :: Word64
   seed2 = fromIntegral idx  :: Word64
@@ -112,15 +114,15 @@ genFakeCell cfg seed idx = (mkCellData cfg $ B.pack list) where
     state' = state*state + seed1*state + (seed2 + 17)
 
 genFakeBlock :: SlotConfig -> Seed -> BlockIdx -> BlockData
-genFakeBlock cfg seed blockIdx = (mkBlockData cfg $ B.concat$ map fromCellData cells) where
+genFakeBlock cfg seed (BlockIdx blockIdx) = (mkBlockData cfg $ B.concat$ map fromCellData cells) where
   k = cellsPerBlock cfg
   a =  k *  blockIdx
   b =  k * (blockIdx + 1) - 1
-  cells = [ genFakeCell cfg seed j | j<-[a..b] ]
+  cells = [ genFakeCell cfg seed (CellIdx j) | j<-[a..b] ]
 
 loadCellData :: SlotConfig -> CellIdx -> IO CellData
-loadCellData cfg idx = case _dataSrc cfg of
-  FakeData seed  -> return $ genFakeCell cfg seed idx
+loadCellData cfg cellidx@(CellIdx idx) = case _dataSrc cfg of
+  FakeData seed  -> return $ genFakeCell cfg seed cellidx
   SlotFile fname -> do
     h <- openBinaryFile fname ReadMode
     hSeek h AbsoluteSeek (fromIntegral (_cellSize cfg) * fromIntegral idx)
@@ -129,8 +131,8 @@ loadCellData cfg idx = case _dataSrc cfg of
     return (mkCellData cfg bs)
 
 loadBlockData :: SlotConfig -> BlockIdx -> IO BlockData
-loadBlockData cfg idx = case _dataSrc cfg of
-  FakeData seed  -> return $ genFakeBlock cfg seed idx
+loadBlockData cfg blockidx@(BlockIdx idx) = case _dataSrc cfg of
+  FakeData seed  -> return $ genFakeBlock cfg seed blockidx
   SlotFile fname -> do
     h <- openBinaryFile fname ReadMode
     hSeek h AbsoluteSeek (fromIntegral (_blockSize cfg) * fromIntegral idx)
@@ -174,7 +176,7 @@ calcBlockTree cfg idx = do
 
 calcAllBlockTrees :: SlotConfig -> IO (Array Int MerkleTree)
 calcAllBlockTrees cfg 
-  = listArray (0,n-1) <$> (forM [0..n-1] $ \idx -> calcBlockTree cfg idx)
+  = listArray (0,n-1) <$> (forM [0..n-1] $ \idx -> calcBlockTree cfg (BlockIdx idx))
   where
     n = blocksPerSlot cfg
 
@@ -195,7 +197,7 @@ calcSlotTree cfg = do
   return $ MkSlotTree minitrees bigtree
 
 extractCellProof :: SlotConfig -> SlotTree -> CellIdx -> [Hash]
-extractCellProof cfg slotTree cellIdx = final where
+extractCellProof cfg slotTree (CellIdx cellIdx) = final where
   (blockIdx, withinBlockIdx) = cellIdx `divMod` (cellsPerBlock cfg)
   blockTree = (_miniTrees slotTree) ! blockIdx
   proof1 = extractMerkleProof blockTree           withinBlockIdx
@@ -203,7 +205,7 @@ extractCellProof cfg slotTree cellIdx = final where
   final  = _merklePath proof1 ++ _merklePath proof2
 
 checkCellProof :: SlotConfig -> SlotTree -> CellIdx -> Hash -> [Hash] -> Bool
-checkCellProof cfg slotTree cellIdx cellHash path 
+checkCellProof cfg slotTree (CellIdx cellIdx) cellHash path 
   | logK + logM /= length path  = error "checkCellProof: incorrect Merkle path length"
   | 2^logK /= k                 = error "checkCellProof: non-power-of-two number of cells per blocks"
   | otherwise                   = reSlotHash == slotTreeRoot slotTree
