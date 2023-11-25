@@ -1,5 +1,8 @@
 pragma circom 2.0.0;
 
+include "misc.circom";
+
+//------------------------------------------------------------------------------
 // 
 // given an input `inp`, this template checks that inp == 2^out
 // with 0 < out <= n
@@ -36,3 +39,37 @@ template Log2(n) {
   inp === sum;  
 
 }
+
+//------------------------------------------------------------------------------
+// 
+// given an input `inp`, this template computes `k` such that 2^k <= inp < 2^{k+1}
+// it also returns the binary decomposition of `inp-1`, and the binary deocmpositiom
+// of the mask `(2^k-1)`
+//
+// we also output a mask vector which is 1 for i=0..out-1, and 0 elsewhere
+//
+
+template CeilingLog2(n) {
+
+  signal input  inp;
+  signal output out;  
+  signal output bits[n];
+  signal output mask[n];
+
+  component tb = ToBits(n);
+  tb.inp <== inp - 1; 
+  tb.out ==> bits;
+
+  signal aux[n+1];
+  aux[n] <== 1;
+  var sum = 0;
+  for(var i=n-1; i>=0; i--) {
+    aux[i]  <== aux[i+1] * (1 - bits[i]);
+    mask[i] <== 1 - aux[i];
+    sum = sum + (aux[i+1] - aux[i]) * (i+1);
+  }
+
+  out <== sum;
+}
+
+//------------------------------------------------------------------------------

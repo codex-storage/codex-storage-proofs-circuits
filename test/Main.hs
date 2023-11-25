@@ -15,6 +15,7 @@ import qualified Circuit.BinaryGTE     as BinaryGTE
 import qualified Circuit.BinaryCompare as BinaryCmp
 import qualified Circuit.ExtractBits   as ExtractBits
 import qualified Circuit.Log2          as Log2
+import qualified Circuit.CeilingLog2   as CeilingLog2
 
 --------------------------------------------------------------------------------
 
@@ -27,6 +28,7 @@ testSimple' verbosity = do
   let runSpec     what = Spec.testSemantics     what verbosity
   let runSpecMany what = Spec.testSemanticsMany what verbosity
 
+  runSpecMany CeilingLog2.specs
   runSpecMany Log2.specs
 
   runSpecMany BinaryCmp.specs
@@ -38,5 +40,5 @@ testSimple' verbosity = do
 --------------------------------------------------------------------------------
 
 main = do
-  testSimple' Silent
+  testSimple' Silent -- Verbose  -- Silent
 
