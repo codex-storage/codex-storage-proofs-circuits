@@ -10,6 +10,7 @@ import poseidon2/merkle
 import types
 import blocks
 import slot
+import dataset
 import sample
 import merkle
 import gen_input
@@ -47,9 +48,10 @@ proc testAllMerkleProofs*( N: int ) =
 when isMainModule:
   # testAllMerkleProofs(20)
 
+  let slotIdx  = 3
   let fakedata = DataSource(kind: FakeData, seed: 12345)
-  let slotcfg  = SlotConfig( nCells: 256, nSamples: 5, dataSrc: fakedata)                      
+  let dsetcfg  = DataSetConfig( nCells: 256, nSlots: 5, nSamples: 5, dataSrc: fakedata)                      
   let entropy  = toF( 1234567 )
-  let prfInput = generateProofInput(slotcfg, entropy)
+  let prfInput = generateProofInput(dsetcfg, slotIdx, entropy)
   exportProofInput( "json/foo.json" , prfInput )
 

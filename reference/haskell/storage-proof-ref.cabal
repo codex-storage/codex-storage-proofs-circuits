@@ -31,9 +31,11 @@ Library
                        bytestring >= 0.9 && < 2,
                        array >= 0.5 && < 1, 
                        random >= 1.1 && < 1.5, 
-                       zikkurat-algebra == 0.0.1
+                       zikkurat-algebra == 0.0.1,
+                       filepath >= 1.4
 
   Exposed-Modules:     Sampling
+                       DataSet
                        Slot
                        Poseidon2
                        Poseidon2.Example

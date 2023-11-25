@@ -82,36 +82,18 @@ fieldElemsPerCell :: SlotConfig -> Int
 fieldElemsPerCell cfg = (_cellSize cfg + 30) `div` 31
 
 --------------------------------------------------------------------------------
-
--- | Writes a @circom@ main component with the given parameters
---
--- > template SampleAndProveV1( nCells, nFieldElemsPerCell, nSamples ) { ... }
---
-circomMainComponentV1 :: SlotConfig -> FilePath -> IO ()
-circomMainComponentV1 slotCfg circomFile = do
-
-  let params =          show (_nCells           slotCfg)
-             ++ ", " ++ show (fieldElemsPerCell slotCfg)
-             ++ ", " ++ show (_nSamples         slotCfg)
-
-  writeFile circomFile $ unlines
-    [ "pragma circom 2.0.0;"
-    , "include \"sample_cells.circom\";"
-    , "component main {public [entropy,slotRoot]} = SampleAndProveV1(" ++ params ++ ");"
-    ]
-
---------------------------------------------------------------------------------
 -- * load data
 
 genFakeCell :: SlotConfig -> Seed -> CellIdx -> CellData
 genFakeCell cfg (Seed seed) (CellIdx idx) = (mkCellData cfg $ B.pack list) where
   list = go (fromIntegral $ _cellSize cfg) 1 
-  seed1 = fromIntegral seed :: Word64
-  seed2 = fromIntegral idx  :: Word64
+  seed1 = fromIntegral seed + 0xdeadcafe :: Word64
+  seed2 = fromIntegral idx  + 0x98765432 :: Word64
   go :: Word64 -> Word64 -> [Word8]
   go 0   _     = []
-  go cnt state = fromIntegral state' : go (cnt-1) state' where
-    state' = state*state + seed1*state + (seed2 + 17)
+  go cnt state = fromIntegral state'' : go (cnt-1) state'' where
+    state'  = state*(state + seed1)*(state + seed2) + state*(state `xor` 0x5a5a5a5a) + seed1*state + (seed2 + 17)
+    state'' = mod state' 1698428844001831
 
 genFakeBlock :: SlotConfig -> Seed -> BlockIdx -> BlockData
 genFakeBlock cfg seed (BlockIdx blockIdx) = (mkBlockData cfg $ B.concat$ map fromCellData cells) where

@@ -50,24 +50,28 @@ type
 
 type 
 
+  Seed*     = uint64
+  CellIdx*  = int
+  BlockIdx* = int
+  SlotIdx*  = int
+
   CellProofInput* = object
     cellData*:    Cell
     merkleProof*: MerkleProof
 
   SlotProofInput* = object
-    slotRoot*:       Root
+    dataSetRoot*:    Root
     entropy*:        Entropy
+    nSlots*:         int
     nCells*:         int
+    slotRoot*:       Root
+    slotIndex*:      SlotIdx
+    slotProof*:      MerkleProof
     proofInputs*:    seq[CellProofInput]
 
 #-------------------------------------------------------------------------------
 
 type 
-
-  Seed*     = int
-  CellIdx*  = int
-  BlockIdx* = int
-
   DataSourceKind* = enum 
     SlotFile,
     FakeData
@@ -80,6 +84,12 @@ type
         seed*:     Seed
 
   SlotConfig* = object
+    nCells*   : int           # number of cells per slot (should be power of two)
+    nSamples* : int           # how many cells we sample
+    dataSrc*  : DataSource    # slot data source
+
+  DataSetConfig* = object
+    nSlots*   : int           # number of slots in the dataset
     nCells*   : int           # number of cells per slot (should be power of two)
     nSamples* : int           # how many cells we sample
     dataSrc*  : DataSource    # slot data source

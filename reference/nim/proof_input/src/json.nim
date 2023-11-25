@@ -76,11 +76,19 @@ proc writeAllMerklePaths(h: Stream, cells: seq[MerkleProof]) =
 #-------------------------------------------------------------------------------
 
 #[
-  signal input  entropy;                                  // public input
-  signal input  slotRoot;                                 // public input
-  signal input  nCells;                                   // public input
-  signal input  cellData[nSamples][nFieldElemsPerCell];   // private input
-  signal input  merklePaths[nSamples][depth];             // private input
+
+  signal input entropy;                                  // public input
+  signal input dataSetRoot;                              // public input
+  signal input slotIndex;                                // must be public, otherwise we could prove a different slot
+
+  signal input slotRoot;                                 // can be private input
+  signal input nCellsPerSlot;                            // can be private input (Merkle tree is safe)
+  signal input nSlotsPerDataSet;                         // can be private input (Merkle tree is safe)
+
+  signal input slotProof[maxLog2NSlots];                 // path from the slot root the the dataset root (private input)
+
+  signal input cellData[nSamples][nFieldElemsPerCell];   // private input
+  signal input merklePaths[nSamples][maxDepth];          // private input
 ]#
 
 proc exportProofInput*(fname: string, prfInput: SlotProofInput) = 
@@ -88,10 +96,15 @@ proc exportProofInput*(fname: string, prfInput: SlotProofInput) =
   defer: h.close()
 
   h.writeLine("{")
-  h.writeLine("  \"slotRoot\": " & toQuotedDecimalF(prfInput.slotRoot) )
-  h.writeLine("  \"entropy\":  " & toQuotedDecimalF(prfInput.entropy ) )
-  h.writeLine("  \"nCells\":   " & $(prfInput.nCells) )
-  h.writeLine("  \"cellData\": ")
+  h.writeLine("  \"dataSetRoot\":      " & toQuotedDecimalF(prfInput.dataSetRoot) )
+  h.writeLine("  \"entropy\":          " & toQuotedDecimalF(prfInput.entropy ) )
+  h.writeLine("  \"nCellsPerSlot\":    " & $(prfInput.nCells) )
+  h.writeLine("  \"nSlotsPerDataSet\": " & $(prfInput.nSlots) )
+  h.writeLine("  \"slotIndex\":        " & $(prfInput.slotIndex) )
+  h.writeLine("  \"slotRoot\":         " & toQuotedDecimalF(prfInput.slotRoot) )
+  h.writeLine("  \"slotProof\":")
+  writeSingleMerklePath(h, "    ", prfInput.slotProof )
+  h.writeLine("  \"cellData\":")
   writeAllCellData(h, collect( newSeq , (for p in prfInput.proofInputs: p.cellData) ))
   h.writeLine("  \"merklePaths\":")
   writeAllMerklePaths(h, collect( newSeq , (for p in prfInput.proofInputs: p.merkleProof) ))

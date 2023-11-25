@@ -9,16 +9,17 @@ import System.IO
 
 import qualified Data.ByteString as B
 
+import Slot    as Slot
+import DataSet as DataSet
 import Poseidon2
-import Slot  
 
 import qualified ZK.Algebra.Curves.BN128.Fr.Mont as Fr
 
 --------------------------------------------------------------------------------
 
-samplingTest :: SlotConfig -> Entropy -> FilePath -> IO ()
-samplingTest slotCfg entropy fpath = do
-  input <- calculateCircuitInput slotCfg entropy
+samplingTest :: DataSetCfg -> SlotIdx -> Entropy -> FilePath -> IO ()
+samplingTest dsetCfg slotIdx entropy fpath = do
+  input <- calculateCircuitInput dsetCfg slotIdx entropy
   exportCircuitInput fpath input
 
 --------------------------------------------------------------------------------
@@ -31,32 +32,49 @@ sampleCellIndex :: SlotConfig -> Entropy -> Hash -> Int -> CellIdx
 sampleCellIndex cfg entropy slotRoot counter = CellIdx (fromInteger idx) where
   u   = sponge2 [entropy , slotRoot , fromIntegral counter] :: Fr
   idx = (Fr.from u) `mod` n          :: Integer
-  n   = (fromIntegral $ _nCells cfg) :: Integer
+  n   = (fromIntegral $ Slot._nCells cfg) :: Integer
  
 --------------------------------------------------------------------------------
 
 data CircuitInput = MkInput 
   { _entropy      :: Entropy       -- ^ public input
-  , _slotRoot     :: Hash          -- ^ public input
-  , _cellsPerSlot :: Int           -- ^ public input
+  , _dataSetRoot  :: Hash          -- ^ public input
+  , _slotIndex    :: Int           -- ^ public input
+  , _slotRoot     :: Hash          -- ^ private input
+  , _slotProof    :: [Fr]          -- ^ private input
+  , _slotsPerDSet :: Int           -- ^ private input
+  , _cellsPerSlot :: Int           -- ^ private input
   , _cellData     :: [[Fr]]        -- ^ private input
   , _merklePaths  :: [[Fr]]        -- ^ private input
   }
   deriving Show
 
 -- | Calculate the the inputs for the storage proof circuit
-calculateCircuitInput :: SlotConfig -> Entropy -> IO CircuitInput
-calculateCircuitInput slotCfg entropy = do
-  slotTree <- calcSlotTree slotCfg 
-  let !slotRoot = slotTreeRoot slotTree 
-  let !idxs = [ sampleCellIndex slotCfg entropy slotRoot j | j <- [1..(_nSamples slotCfg)] ]
+calculateCircuitInput :: DataSetCfg -> SlotIdx -> Entropy -> IO CircuitInput
+calculateCircuitInput dataSetCfg slotIdx@(SlotIdx sidx) entropy = do
+  let nslots = _nSlots dataSetCfg
 
-  cellData <- forM idxs $ \idx -> (cellDataToFieldElements <$> loadCellData slotCfg idx)
-  let !merklePaths = [ extractCellProof slotCfg slotTree idx | idx <- idxs ]
+  let slotCfgs = [ dataSetSlotCfg dataSetCfg (SlotIdx i) | i <- [0..nslots-1] ]
+  slotTrees <- mapM calcSlotTree slotCfgs 
+  let !slotRoots = map slotTreeRoot slotTrees
+  let !dsetTree  = calcMerkleTree slotRoots
+  let !dsetRoot  = merkleRootOf dsetTree 
+
+  let ourSlotCfg  = slotCfgs  !! sidx
+  let ourSlotRoot = slotRoots !! sidx
+  let ourSlotTree = slotTrees !! sidx
+  let !idxs = [ sampleCellIndex ourSlotCfg entropy ourSlotRoot j | j <- [1..(Slot._nSamples ourSlotCfg)] ]
+
+  cellData <- forM idxs $ \idx -> (cellDataToFieldElements <$> loadCellData ourSlotCfg idx)
+  let !merklePaths = [ extractCellProof ourSlotCfg ourSlotTree idx | idx <- idxs ]
   return $ MkInput
     { _entropy      = entropy
-    , _slotRoot     = slotRoot
-    , _cellsPerSlot = _nCells slotCfg
+    , _dataSetRoot  = dsetRoot
+    , _slotIndex    = sidx
+    , _slotRoot     = ourSlotRoot
+    , _slotProof    = extractMerkleProof_ dsetTree sidx
+    , _slotsPerDSet = nslots
+    , _cellsPerSlot = Slot._nCells ourSlotCfg
     , _cellData     = cellData
     , _merklePaths  = merklePaths
     }
@@ -70,10 +88,15 @@ calculateCircuitInput slotCfg entropy = do
 exportCircuitInput :: FilePath -> CircuitInput -> IO ()
 exportCircuitInput fpath input = do
   h <- openFile fpath WriteMode
-  hPutStrLn h $ "{ \"entropy\":  " ++ show (show (_entropy      input))
-  hPutStrLn h $ ", \"slotRoot\": " ++ show (show (_slotRoot     input))
-  hPutStrLn h $ ", \"nCells\":   " ++ show (show (_cellsPerSlot input))
-  hPutStrLn h $ ", \"cellData\": " 
+  hPutStrLn h $ "{ \"entropy\":          " ++ show (show (_entropy      input))
+  hPutStrLn h $ ", \"dataSetRoot\":      " ++ show (show (_dataSetRoot  input))
+  hPutStrLn h $ ", \"slotIndex\":        " ++ show (show (_slotIndex    input))
+  hPutStrLn h $ ", \"slotRoot\":         " ++ show (show (_slotRoot     input))
+  hPutStrLn h $ ", \"nSlotsPerDataSet\": " ++ show (show (_slotsPerDSet input))
+  hPutStrLn h $ ", \"nCellsPerSlot\":    " ++ show (show (_cellsPerSlot input))
+  hPutStrLn h $ ", \"slotProof\":"
+  hPrintList h 4 (map show $ _slotProof input)
+  hPutStrLn h $ ", \"cellData\":" 
   hPrintListOfLists h ((map.map) show $ _cellData input)
   hPutStrLn h $ ", \"merklePaths\": " 
   hPrintListOfLists h ((map.map) show $ _merklePaths input)
