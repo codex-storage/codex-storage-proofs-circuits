@@ -40,5 +40,5 @@ testSimple' verbosity = do
 --------------------------------------------------------------------------------
 
 main = do
-  testSimple' Silent -- Verbose  -- Silent
+  testSimple' Info --Silent -- Verbose  -- Silent
 

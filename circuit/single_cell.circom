@@ -3,83 +3,8 @@ pragma circom 2.0.0;
 include "poseidon2_perm.circom";
 include "poseidon2_hash.circom";
 
+include "merkle.circom";
 include "misc.circom";
-
-//------------------------------------------------------------------------------
-
-//
-// reconstruct the Merkle root using a Merkle inclusion proof
-//
-// parameters:
-//  - depth: the depth of the Merkle tree = log2( numberOfLeaves )
-//
-// inputs and outputs:
-//  - leaf:        the leaf hash
-//  - pathBits:    the linear index of the leaf, in binary decomposition (little-endian)
-//  - merklePath:  the Merkle inclusion proof (required hashes, starting from the leaf and ending near the root)
-//  - recRoot:     the reconstructod Merkle root
-//
-// NOTE: we don't check whether the bits are really bits, that's the
-// responsability of the caller!
-//
-
-template MerklePathBits( depth ) {
-  
-  signal input  leaf;
-  signal input  pathBits[ depth ];
-  signal input  merklePath[ depth ];
-  signal output recRoot;
-
-  // the sequence of reconstructed hashes along the path
-  signal aux[ depth+1 ];
-  aux[0] <== leaf;
-
-  signal switch[ depth];
-  
-  component comp[ depth ];
-  for(var i=0; i<depth; i++) {
-    comp[i] = Compression();
-
-    var L = aux[i];
-    var R = merklePath[i];
-
-    // based on pathBits[i], we switch or not
-    
-    switch[i]      <== (R-L) * pathBits[i];
-    comp[i].inp[0] <== L + switch[i];
-    comp[i].inp[1] <== R - switch[i];
-
-    comp[i].out ==> aux[i+1];
-  }
-
-  aux[depth] ==> recRoot;
-}
-
-//--------------------------------------
-
-//
-// a version of the above where the leaf index is given as an integer
-// instead of a sequence of bits
-//
-
-template MerklePathIndex( depth ) {
-  
-  signal input  leaf;
-  signal input  linearIndex;
-  signal input  merklePath[ depth ];
-  signal output recRoot;
-
-  // decompose the linear cell index into bits (0 = left, 1 = right)
-  component tb   = ToBits( depth );
-  component path = MerklePathBits( depth );
-
-  tb.inp <== linearIndex;
-  tb.out ==> path.pathBits;
-
-  path.leaf       <== leaf;
-  path.merklePath <== merklePath;
-  path.recRoot    ==> recRoot;
-}
 
 //------------------------------------------------------------------------------
 
@@ -88,39 +13,64 @@ template MerklePathIndex( depth ) {
 // checking whether it matches the given slot root
 //
 // parameters:
-//  - nFieldElemsPerCell: how many field elements a cell consists of
-//  - merkleDepth: the depth of slot subtree = log2(nCellsPerSlot)
+//  - nFieldElemsPerCell: how many field elements a cell consists of (= 2048/31 = 67)
+//  - botDepth: the depth of the per-block minitree (= 5)
+//  - maxDepth: the maximum depth of slot subtree (= 32)
 //
 // inputs and outputs:
-//  - indexBits:  the linear index of the cell, within the slot subtree, in binary
-//  - data:       the cell data (already encoded as field elements)
-//  - merklePath: the Merkle inclusion proof
-//  - slotRoot:   the expected slot root
+//  - indexBits:      the linear index of the cell, within the slot subtree, in binary
+//  - lastBits:       the index of the last cell (size - 1), in binary (required for odd-even node key)
+//  - maskBits:       the binary mask of the size rounded up to a power of two
+//  - data:           the cell data (already encoded as field elements)
+//  - merklePath:     the Merkle inclusion proof
+//  - slotRoot:       the expected slot root
 //
 // NOTE: we don't check whether the bits are really bits, that's the
-// responsability of the caller!
+//       responsability of the caller!
 //
 
-template ProveSingleCell( nFieldElemsPerCell, merkleDepth ) {
+template ProveSingleCell( nFieldElemsPerCell, botDepth, maxDepth ) {
 
   signal input slotRoot;
   signal input data[ nFieldElemsPerCell ];
+  signal input lastBits  [ maxDepth ];
+  signal input indexBits [ maxDepth ];
+  signal input maskBits  [ maxDepth + 1 ];
+  signal input merklePath[ maxDepth ];
 
-  signal input indexBits [ merkleDepth ];
-  signal input merklePath[ merkleDepth ];
+  // these will reconstruct the Merkle path up to the slot root
+  // in two steps: first the block-level ("bottom"), then the slot-level ("middle")
+  component pbot = RootFromMerklePath( botDepth            );
+  component pmid = RootFromMerklePath( maxDepth - botDepth );
 
-  // this will reconstruct the Merkle path up to the slot root
-  component path = MerklePathBits( merkleDepth );
-  path.pathBits   <== indexBits;
-  path.merklePath <== merklePath;
+  for(var i=0; i<maxDepth; i++) {
+    if (i<botDepth) {
+      pbot.pathBits[i]     <== indexBits[i];
+      pbot.maskBits[i]     <== maskBits[i];
+      pbot.lastBits[i]     <== lastBits[i];
+      pbot.merklePath[i]   <== merklePath[i];
+    }
+    else {
+      var j = i - botDepth;
+      pmid.pathBits[j]     <== indexBits[i];
+      pmid.maskBits[j]     <== maskBits[i];
+      pmid.lastBits[j]     <== lastBits[i];
+      pmid.merklePath[j]   <== merklePath[i];
+    }
+  }
+  pbot.maskBits[ botDepth            ] <== 0;
+  pmid.maskBits[ maxDepth - botDepth ] <== 0;
 
   // compute the cell hash
   component hash = Poseidon2_hash_rate2( nFieldElemsPerCell );
-  hash.inp <== data;
-  hash.out ==> path.leaf;
+  hash.inp  <== data;
+  hash.out  ==> pbot.leaf;
+  pmid.leaf <== pbot.recRoot;
+
+log("middle bottom root check = ", pmid.recRoot == slotRoot);
 
   // check if the reconstructed root matches the actual slot root
-  path.recRoot === slotRoot;
+  pmid.recRoot === slotRoot;
 
 }
 

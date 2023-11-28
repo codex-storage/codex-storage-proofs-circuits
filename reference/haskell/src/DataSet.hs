@@ -4,19 +4,24 @@ module DataSet where
 
 --------------------------------------------------------------------------------
 
+import Data.List
 import System.FilePath
 
 import Slot hiding ( MkSlotCfg(..) )
 import qualified Slot as Slot
 
+import Misc
+
 --------------------------------------------------------------------------------
 
 data DataSetCfg = MkDataSetCfg 
-  { _nSlots    :: Int           -- ^ number of slots per dataset
-  , _cellSize  :: Int
-  , _blockSize :: Int
-  , _nCells    :: Int
-  , _nSamples  :: Int
+  { _maxDepth      :: Int       -- ^ @nCells@ must fit into this many bits
+  , _maxLog2NSlots :: Int       -- ^ @nSlots@ must fit into this many bits
+  , _nSlots    :: Int           -- ^ number of slots per dataset
+  , _cellSize  :: Int           -- ^ cell size in bytes
+  , _blockSize :: Int           -- ^ slot size in bytes
+  , _nCells    :: Int           -- ^ number of cells per slot
+  , _nSamples  :: Int           -- ^ number of cells we sample in a proof
   , _dataSrc   :: DataSource
   }
   deriving Show
@@ -57,12 +62,20 @@ loadDataSetBlock dsetCfg slotIdx@(SlotIdx idx) blockidx
 circomMainComponent :: DataSetCfg -> FilePath -> IO ()
 circomMainComponent dsetCfg circomFile = do
 
-  let params =          show (DataSet.fieldElemsPerCell dsetCfg)
-             ++ ", " ++ show (DataSet._nSamples         dsetCfg)
+  let cellsPerBlock = (DataSet._blockSize dsetCfg) `div` (DataSet._cellSize dsetCfg)
+  let blockDepth    = ceilingLog2 (fromIntegral cellsPerBlock)
 
+  let params = intercalate ", " $ map show
+         [ DataSet._maxDepth         dsetCfg
+         , DataSet._maxLog2NSlots    dsetCfg
+         , blockDepth
+         , DataSet.fieldElemsPerCell dsetCfg
+         , DataSet._nSamples         dsetCfg
+         ]
   writeFile circomFile $ unlines
     [ "pragma circom 2.0.0;"
     , "include \"sample_cells.circom\";"
+    , "// SampleAndProven( maxDepth, maxLog2NSlots, blockTreeDepth, nFieldElemsPerCell, nSamples ) "
     , "component main {public [entropy,dataSetRoot,slotIndex]} = SampleAndProve(" ++ params ++ ");"
     ]
 

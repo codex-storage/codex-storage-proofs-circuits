@@ -11,6 +11,8 @@ include "misc.circom";
 // NOTE: this is rather nontrivial, as everything is computed modulo `r`, 
 // so naive bit decomposition does not work (there are multiple solutions).
 // 
+// TODO: optimize this
+//
 
 template ExtractLowerBits(n) {
 

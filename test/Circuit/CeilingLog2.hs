@@ -30,12 +30,12 @@ type TestCase = Integer
 type Output   = (Int,[Bool],[Bool])
 
 semantics :: GP -> TestCase -> Expected Output
-semantics n a 
-  | a >0 && k >= 0 && k < n  = Expecting (k,bits,mask) 
-  | otherwise                = ShouldFail
+semantics n a  
+  | a > 0 && k >= 0 && k <= n  = Expecting (k,bits,mask) 
+  | otherwise                  = ShouldFail
   where
     k = ceilingLog2 a
-    mask = [ i < k | i<-[0..n-1] ]
+    mask = [ i < k | i<-[0..n] ]
     bits = [ testBit (a-1) i | i<-[0..n-1] ]
 
 -- | Smallest integer @k@ such that @2^k@ is larger or equal to @n@

@@ -42,11 +42,13 @@ template Log2(n) {
 
 //------------------------------------------------------------------------------
 // 
-// given an input `inp`, this template computes `k` such that 2^k <= inp < 2^{k+1}
+// given an input `inp`, this template computes `out := k` such that 2^k <= inp < 2^{k+1}
 // it also returns the binary decomposition of `inp-1`, and the binary deocmpositiom
 // of the mask `(2^k-1)`
 //
-// we also output a mask vector which is 1 for i=0..out-1, and 0 elsewhere
+// we also output a mask vector which is 1 for i=0..k-1, and 0 elsewhere
+//
+// we require `k <= n`, otherwise this will fail.
 //
 
 template CeilingLog2(n) {
@@ -54,7 +56,7 @@ template CeilingLog2(n) {
   signal input  inp;
   signal output out;  
   signal output bits[n];
-  signal output mask[n];
+  signal output mask[n+1];
 
   component tb = ToBits(n);
   tb.inp <== inp - 1; 
@@ -68,6 +70,7 @@ template CeilingLog2(n) {
     mask[i] <== 1 - aux[i];
     sum = sum + (aux[i+1] - aux[i]) * (i+1);
   }
+  mask[n] <== 0;
 
   out <== sum;
 }

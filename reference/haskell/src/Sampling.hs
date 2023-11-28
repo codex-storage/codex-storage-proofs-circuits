@@ -36,6 +36,15 @@ sampleCellIndex cfg entropy slotRoot counter = CellIdx (fromInteger idx) where
  
 --------------------------------------------------------------------------------
 
+padWithZeros :: Int -> [Fr] -> [Fr]
+padWithZeros n xs 
+  | m <= n     = xs ++ replicate (n-m) Fr.zero
+  | otherwise  = error "padWithZeros: input too long"
+  where
+    m = length xs
+
+--------------------------------------------------------------------------------
+
 data CircuitInput = MkInput 
   { _entropy      :: Entropy       -- ^ public input
   , _dataSetRoot  :: Hash          -- ^ public input
@@ -72,11 +81,11 @@ calculateCircuitInput dataSetCfg slotIdx@(SlotIdx sidx) entropy = do
     , _dataSetRoot  = dsetRoot
     , _slotIndex    = sidx
     , _slotRoot     = ourSlotRoot
-    , _slotProof    = extractMerkleProof_ dsetTree sidx
+    , _slotProof    = padWithZeros (_maxLog2NSlots dataSetCfg) $ extractMerkleProof_ dsetTree sidx
     , _slotsPerDSet = nslots
     , _cellsPerSlot = Slot._nCells ourSlotCfg
     , _cellData     = cellData
-    , _merklePaths  = merklePaths
+    , _merklePaths  = map (padWithZeros (_maxDepth dataSetCfg)) merklePaths
     }
 
 -- | Export the inputs of the storage proof circuits in JSON format,

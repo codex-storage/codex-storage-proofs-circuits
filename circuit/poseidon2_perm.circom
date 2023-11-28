@@ -213,5 +213,20 @@ template Compression() {
   perm.out[0] ==> out;
 }
 
+//--------------------------------------
+
+template KeyedCompression() {
+  signal input  key;
+  signal input  inp[2];
+  signal output out;
+
+  component perm = Permutation();
+  perm.inp[0] <== inp[0];
+  perm.inp[1] <== inp[1];
+  perm.inp[2] <== key;
+
+  perm.out[0] ==> out;
+}
+
 //------------------------------------------------------------------------------
 

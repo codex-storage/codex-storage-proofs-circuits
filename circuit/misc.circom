@@ -55,7 +55,7 @@ template IsEqual() {
   signal output out;
 
   component isz = IsZero();
-  isz.in  <== A - B;
+  isz.inp <== A - B;
   isz.out ==> out;
 }
 
