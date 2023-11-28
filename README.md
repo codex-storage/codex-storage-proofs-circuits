@@ -5,14 +5,24 @@ Codex Storage Proofs for the MVP
 This document describes the storage proof system for the Codex 2023 Q4 MVP.
 
 
+Repo organization
+-----------------
+
+- `README.md` - this document
+- `circuit/` - the proof circuit (`circom` code)
+- `reference/haskell/` - Haskell reference implementation of the proof input generation
+- `reference/nim/` - Nim reference implementation of the proof input generation
+- `test/` - tests for (some parts of the) circuit (using the `r1cs-solver` tool)
+
+
 Setup
 -----
 
 We assume that a user dataset is split into `nSlots` number of (not necessarily 
-uniformly sized) "slots" of size `slotSize`, for example 10 GB or 100 GB (for 
-the MVP we may chose a smaller sizes). The slots of the same dataset are spread 
-over different storage nodes, but a single storage node can hold several slots 
-(of different sizes, and belonging to different datasets). The slots themselves
+uniformly sized) "slots" of size `slotSize`, for example 10 GB or 100 GB or even
+1,000 GB (for the MVP we may chose a smaller sizes). The slots of the same dataset 
+are spread over different storage nodes, but a single storage node can hold several 
+slots (of different sizes, and belonging to different datasets). The slots themselves
 can be optionally erasure coded, but this does not change the proof system, only 
 the robustness of it.
 
@@ -26,23 +36,30 @@ Note that we can simply calculate:
 
     nCells = slotSize / cellSize
 
-We then hash each cell (using the sponge construction with Poseidon2; see below
-for details), and build a binary Merkle tree over this hashes. This has depth
-`d = ceil[ log2(nCells) ]`. Note: if `nCells` is not a power of two, then we
-have to add dummy hashes. The exact conventions for doing this are described 
-below.
+We hash each cell independently, using the sponge construction with Poseidon2 
+(see below for details).
 
-The Merkle root of the cells of a single slot is called the "slot root", and
-is denoted by `slotRoot`.
+The cells are then organized to `blockSize = 64kb` blocks, each block containing
+`blockSize / cellSize = 32` cells. This is for compatibility with the networking
+layer, which use larger (right now 64kb) blocks. For each block, we compute a
+block hash by building a depth `5 = log2(32)` complete Merkle tree, using again 
+Poseidon2 hash, with the Merkle tree conventions described below. 
 
-Then for a given dataset, we can build another binary Merkle tree on the top of
-its slot roots, resulting in the "dataset root". Grafting these Merkle trees
-together we get a big dataset Merkle tree; however one should be careful 
-about the padding conventions (it makes sense to construct the dataset-level
-Merkle tree separately, as `nSlots` may not be a power of two).
+Then on the set of of block hashes in a slot (we have `slotSize / blockSize` many 
+ones), we build another (big) Merkle tree, whose root will identify the slot, 
+which we call the the "slot root", and is denoted by `slotRoot`.
 
-The dataset root is a commitment to the whole dataset, and the user will post
-it on-chain, to ensure that the nodes really store its data and not something else.
+Then for a given dataset, containing several slots, we can build a third binary 
+Merkle tree on the top of its slot roots, resulting in the "dataset root" (note:
+this is not the same as the SHA256 hash associated with the original dataset 
+uploaded by the user). Grafting these Merkle trees together we get a big dataset 
+Merkle tree; however one should be careful about the padding conventions 
+(it makes sense to construct the dataset-level Merkle tree separately, as `nSlots`
+may not be a power of two, and later maybe `nCells` and `nBlocks` won't be
+power-of-two either).
+
+The dataset root is a commitment to the whole (erasure coded) dataset, and will 
+be posted on-chain, to ensure that the nodes really store its data and not something else.
 Optionally, the slot roots can be posted on-chain, but this seems to be somewhat
 wasteful.
 
@@ -194,16 +211,15 @@ the samples in single slot; then use Groth16 to prove it.
 
 Public inputs:
 
-- slot or dataset root (depending on what we decide on)
-- number of cells in the slot (or possibly its logarithm; right now `nCells` 
-  is assumed to be a power of two)
+- dataset root
+- slot index within the dataset
 - entropy (public randomness)
-- in case of using dataset root, also the slot index: 
-  which slot of the dataset we are talking about; `[1..nSlots]`
 
 Private inputs:
 
-- the slot root (if it was not a public input)
+- the slot root 
+- number of cells in the slot 
+- the number of slots in the dataset
 - the underlying data of the cells, as sequences of field elements
 - the Merkle paths from the leaves (the cell hashes) to the slot root
 - the Merkle path from the slot root to the dataset root
