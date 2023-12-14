@@ -19,6 +19,11 @@ const exDataSetCfg* =
                , dataSrc:  DataSource(kind: FakeData, seed: 12345)
                )
 
+const exGlobalCfg* = 
+  GlobalConfig( maxDepth:       16
+              , maxLog2NSlots:  5               
+              )
+
 #-------------------------------------------------------------------------------
 
 {.overflowChecks: off.}

@@ -50,8 +50,9 @@ when isMainModule:
 
   let slotIdx  = 3
   let fakedata = DataSource(kind: FakeData, seed: 12345)
-  let dsetcfg  = DataSetConfig( nCells: 256, nSlots: 5, nSamples: 5, dataSrc: fakedata)                      
+  let globcfg  = GlobalConfig( maxDepth: 16, maxLog2NSlots: 5)  
+  let dsetcfg  = DataSetConfig( nCells: 256, nSlots: 5, nSamples: 10, dataSrc: fakedata)                      
   let entropy  = toF( 1234567 )
-  let prfInput = generateProofInput(dsetcfg, slotIdx, entropy)
+  let prfInput = generateProofInput(globcfg, dsetcfg, slotIdx, entropy)
   exportProofInput( "json/foo.json" , prfInput )
 

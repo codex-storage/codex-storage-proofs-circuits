@@ -1,5 +1,6 @@
 
 import std/strutils
+import std/sequtils
 
 from constantine/math/io/io_fields import toDecimal
 
@@ -48,6 +49,18 @@ type
 
 #-------------------------------------------------------------------------------
 
+# the circuit expect merkle path of statically known length, so we need to pad them
+func padMerkleProof*( old: MerkleProof, newlen: int ): MerkleProof = 
+  let pad = newlen - old.merklePath.len
+  assert( pad >= 0 )
+  return MerkleProof( leafIndex:       old.leafIndex       
+                    , leafValue:       old.leafValue      
+                    , merklePath:      old.merklePath & repeat(zero,pad)
+                    , numberOfLeaves:  old.numberOfLeaves
+                    )
+
+#-------------------------------------------------------------------------------
+
 type 
 
   Seed*     = uint64
@@ -93,5 +106,9 @@ type
     nCells*   : int           # number of cells per slot (should be power of two)
     nSamples* : int           # how many cells we sample
     dataSrc*  : DataSource    # slot data source
+
+  GlobalConfig* = object
+    maxDepth*      : int      # maximum depth of the big merkle tree (log2 of maximum numbers of cells per slot)
+    maxLog2NSlots* : int      # log2 of maximum number of slots per dataset
 
 #-------------------------------------------------------------------------------

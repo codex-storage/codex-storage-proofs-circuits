@@ -29,7 +29,7 @@ proc buildSlotTreeFull( slotCfg: SlotConfig ): (seq[MerkleTree], MerkleTree) =
 proc buildSlotTree( slotCfg: SlotConfig ): MerkleTree = 
   return buildSlotTreeFull(slotCfg)[1]
 
-proc generateProofInput*( dsetCfg: DataSetConfig, slotIdx: SlotIdx, entropy: Entropy ): SlotProofInput =
+proc generateProofInput*( globCfg: GlobalConfig, dsetCfg: DataSetConfig, slotIdx: SlotIdx, entropy: Entropy ): SlotProofInput =
   let nslots  = dsetCfg.nSlots
   let ncells  = dsetCfg.nCells
   let nblocks = ncells div cellsPerBlock
@@ -57,7 +57,7 @@ proc generateProofInput*( dsetCfg: DataSetConfig, slotIdx: SlotIdx, entropy: Ent
     let cellData  = slotLoadCellData( ourSlotCfg, cellIdx )
     let botProof  = merkleProof( blockTree , cellIdx mod cellsPerBlock )
     let topProof  = merkleProof( bigTree   , blockIdx )
-    let prf  = mergeMerkleProofs( botProof, topProof )
+    let prf       = padMerkleProof( mergeMerkleProofs( botProof, topProof ), globCfg.maxDepth )
     inputs.add( CellProofInput(cellData: cellData, merkleProof: prf) )
 
   return SlotProofInput( dataSetRoot: dsetRoot
@@ -66,7 +66,7 @@ proc generateProofInput*( dsetCfg: DataSetConfig, slotIdx: SlotIdx, entropy: Ent
                        , nSlots:      nslots
                        , slotIndex:   slotIdx
                        , slotRoot:    ourSlotRoot 
-                       , slotProof:   slotProof
+                       , slotProof:   padMerkleProof( slotProof, globCfg.maxLog2NSlots )
                        , proofInputs: inputs
                        )
 

@@ -15,8 +15,8 @@ smallDataSetCfg = MkDataSetCfg
   , _maxLog2NSlots = 5
   , _nSlots    = 5
   , _cellSize  = 128
-  , _blockSize = 1024
-  , _nCells    = 64
+  , _blockSize = 4096 -- 1024
+  , _nCells    = 256  -- 64
   , _nSamples  = 10
   , _dataSrc   = FakeData (Seed 12345)
   }

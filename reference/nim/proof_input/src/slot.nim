@@ -44,7 +44,7 @@ genFakeCell cfg (Seed seed) (CellIdx idx) = (mkCellData cfg $ B.pack list) where
   go cnt state = fromIntegral state'' : go (cnt-1) state'' where
     state' = state*(state + seed1)*(state + seed2) + state*(state `xor` 0x5a5a5a5a) + seed1*state + (seed2 + 17)
     state'' = mod state' 1698428844001831
-#]
+]#
 
 #-------------------------------------------------------------------------------
 
