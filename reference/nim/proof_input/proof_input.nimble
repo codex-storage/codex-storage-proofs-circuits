@@ -4,7 +4,7 @@ author        = "Balazs Komuves"
 description   = "reference implementation for generating the proof inputs"
 license       = "MIT or Apache-2.0"
 srcDir        = "src"
-bin           = @["testmain"]
+bin           = @["cli","testmain"]
 
 requires "nim >= 1.6.0"
 requires "https://github.com/mratsim/constantine"

@@ -5,7 +5,7 @@ import std/streams
 import std/sequtils
 
 import types
-import blocks
+#import blocks
 
 #-------------------------------------------------------------------------------
 # Example slot configuration

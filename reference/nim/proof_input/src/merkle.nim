@@ -6,8 +6,8 @@ import constantine/math/arithmetic
 import constantine/math/io/io_fields
 
 import poseidon2/types
-import poseidon2/merkle
 import poseidon2/compress
+#import poseidon2/merkle
 
 import types
 

@@ -21,9 +21,17 @@ func ceilingLog2* (x: int): int =
   else:
     return (floorLog2(x-1) + 1)
 
-func exactLog2( x: int): int = 
+func exactLog2*(x: int): int = 
   let k = ceilingLog2(x)
   assert( x == 2^k, "exactLog2: not a power of two" )
   return k
+
+func checkPowerOfTwo*(x: int , what: string): int = 
+  let k = ceilingLog2(x)
+  assert( x == 2^k, ("`" & what & "` is expected to be a power of 2") )
+  return x
+
+# wtf Nim, serously
+func pow2*(k: int): int = 2^k
 
 #-------------------------------------------------------------------------------

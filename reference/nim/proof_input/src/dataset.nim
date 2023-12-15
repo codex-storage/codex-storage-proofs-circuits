@@ -1,12 +1,12 @@
 
-import sugar
+#import sugar
 
-import std/streams
-import std/sequtils
+#import std/streams
+#import std/sequtils
 
 import types
-import blocks
 import slot
+#import blocks
 
 #-------------------------------------------------------------------------------
 # Example slot configuration

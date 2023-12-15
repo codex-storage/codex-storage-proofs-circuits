@@ -5,8 +5,8 @@ import std/bitops
 import constantine/math/arithmetic
 
 import poseidon2/types
-import poseidon2/io
 import poseidon2/sponge
+#import poseidon2/io
 
 import types
 import misc
