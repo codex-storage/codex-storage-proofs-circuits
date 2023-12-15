@@ -5,7 +5,7 @@ Guide though the whole proof workflow
 The workflow described below is implemented with shell scripts in this directory.
 So the below is more like an explanation.
 
-The run the full workflow:
+To run the full workflow:
 
 - set the parameters by editing `params.sh`
 - run `setup.sh` to do the circuit-specific setup
@@ -58,7 +58,7 @@ First create the main component:
 
 Then compile the circuit:
 
-    $ circom --r1cs --O2 -l../../circuit proof_main.circom
+    $ circom --r1cs --wasm --O2 -l../../circuit proof_main.circom
 
 ### Do the circuit-specific setup
 

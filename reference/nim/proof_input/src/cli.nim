@@ -76,7 +76,7 @@ proc printHelp() =
   echo " -i, --index      = <slotIndex>     : index of the slot (within the dataset) we prove"
   echo " -k, --log2ncells = <log2(ncells)>  : log2 of the number of cells inside this slot (eg. 10)"
   echo " -K, --ncells     = <ncells>        : number of cells inside this slot (eg. 1024; must be a power of two)"
-  echo " -o, --output     = <inupt.json>    : the JSON file into which we write the proof input"
+  echo " -o, --output     = <input.json>    : the JSON file into which we write the proof input"
   echo " -C, --circom     = <main.circom>   : the circom main component to create with these parameters"
   echo ""
 
