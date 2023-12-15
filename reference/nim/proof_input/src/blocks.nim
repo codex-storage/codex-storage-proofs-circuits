@@ -12,45 +12,47 @@ import merkle
 
 #-------------------------------------------------------------------------------
 
-func hashCellOpen( cellData: openArray[byte] ): Hash = 
-  assert( cellData.len == cellSize , "cells are expected to be exactly 2048 bytes" )
+func hashCellOpen( globcfg: GlobalConfig, cellData: openArray[byte] ): Hash = 
+  assert( cellData.len == globcfg.cellSize , ("cells are expected to be exactly " & $globcfg.cellSize & " bytes") )
   return Sponge.digest( cellData, rate=2 )
 
-func hashCell*(cellData: Cell): Hash =  hashCellOpen(cellData)
+func hashCell*( globcfg: GlobalConfig, cellData: Cell): Hash =  hashCellOpen(globcfg, cellData)
 
 #-------------------------------------------------------------------------------
 
-func splitBlockIntoCells( blockData: openArray[byte] ): seq[Cell] = 
-  assert( blockData.len == blockSize , "network blocks are expected to be exactly 65536 bytes" )
+func splitBlockIntoCells( globcfg: GlobalConfig, blockData: openArray[byte] ): seq[Cell] = 
+  assert( blockData.len == globcfg.blockSize , ("network blocks are expected to be exactly" & $globcfg.blockSize & " bytes" ) )
 
-  var cells : seq[seq[byte]] = newSeq[seq[byte]]( cellsPerBlock )
+  var cells : seq[seq[byte]] = newSeq[seq[byte]]( cellsPerBlock(globcfg) )
 
   let start = low(blockData)
-  var leaves : seq[Hash] = newSeq[Hash]( cellsPerBlock )
-  for i in 0..<cellsPerBlock:
-    let a = start +  i    * cellSize
-    let b = start + (i+1) * cellSize
+  var leaves : seq[Hash] = newSeq[Hash]( cellsPerBlock(globcfg) )
+  for i in 0..<cellsPerBlock(globcfg):
+    let a = start +  i    * globcfg.cellSize
+    let b = start + (i+1) * globcfg.cellSize
     cells[i] = blockData[a..<b].toSeq()
    
   return cells
 
 # returns the special hash of a network block (this is a Merkle root built on the
 # top of the hashes of the 32 cells inside the block)
-func hashNetworkBlockOpen( blockData: openArray[byte] ): Hash = 
-  let cells  = splitBlockIntoCells(blockData)
-  let leaves = collect( newSeq , (for i in 0..<cellsPerBlock: hashCell(cells[i]) ))
+func hashNetworkBlockOpen( globcfg: GlobalConfig, blockData: openArray[byte] ): Hash = 
+  let cells  = splitBlockIntoCells(globcfg, blockData)
+  let leaves = collect( newSeq , (for i in 0..<cellsPerBlock(globcfg): hashCell(globcfg, cells[i]) ))
   return merkleRoot(leaves)
 
-func hashNetworkBlock*(blockData: Block): Hash = hashNetworkBlockOpen(blockData)
+func hashNetworkBlock*(globcfg: GlobalConfig, blockData: Block): Hash = 
+  hashNetworkBlockOpen(globcfg, blockData)
 
 #-------------------------------------------------------------------------------
 
 # returns the mini Merkle tree built on the 32 cells inside a network block
-func networkBlockTreeOpen( blockData: openArray[byte] ): MerkleTree =
-  let cells  = splitBlockIntoCells(blockData)
-  let leaves = collect( newSeq , (for i in 0..<cellsPerBlock: hashCell(cells[i]) ))
+func networkBlockTreeOpen( globcfg: GlobalConfig, blockData: openArray[byte] ): MerkleTree =
+  let cells  = splitBlockIntoCells( globcfg, blockData)
+  let leaves = collect( newSeq , (for i in 0..<cellsPerBlock(globcfg): hashCell( globcfg, cells[i]) ))
   return merkleTree(leaves)
 
-func networkBlockTree*(blockData: Block): MerkleTree = networkBlockTreeOpen(blockData)
+func networkBlockTree*( globcfg: GlobalConfig, blockData: Block): MerkleTree = 
+  networkBlockTreeOpen(globcfg, blockData)
 
 #-------------------------------------------------------------------------------

@@ -21,7 +21,9 @@ const exDataSetCfg* =
 
 const exGlobalCfg* = 
   GlobalConfig( maxDepth:       16
-              , maxLog2NSlots:  5               
+              , maxLog2NSlots:  5     
+              , cellSize:       256
+              , blockSize:      4096          
               )
 
 #-------------------------------------------------------------------------------
@@ -50,12 +52,12 @@ func slotCfgFromDataSetCfg*( dsetcfg: DataSetConfig, idx: SlotIdx ): SlotConfig 
 
 #-------------------------------------------------------------------------------
 
-proc dataSetLoadCellData*(dsetCfg: DataSetConfig, slotIdx: SlotIdx, cellIdx: CellIdx): Cell =
+proc dataSetLoadCellData*(globCfg: GlobalConfig, dsetCfg: DataSetConfig, slotIdx: SlotIdx, cellIdx: CellIdx): Cell =
   let slotCfg = slotCfgFromDataSetCfg( dsetCfg, slotIdx )
-  return slotLoadCellData(slotCfg, cellIdx)
+  return slotLoadCellData(globCfg, slotCfg, cellIdx)
 
-proc dataSetLoadBlockData*(dsetCfg: DataSetConfig, slotIdx: SlotIdx, blockIdx: BlockIdx): Block =
+proc dataSetLoadBlockData*(globCfg: GlobalConfig, dsetCfg: DataSetConfig, slotIdx: SlotIdx, blockIdx: BlockIdx): Block =
   let slotCfg = slotCfgFromDataSetCfg( dsetCfg, slotIdx )
-  return slotLoadBlockData(slotCfg, blockIdx)
+  return slotLoadBlockData(globCfg, slotCfg, blockIdx)
 
 #-------------------------------------------------------------------------------

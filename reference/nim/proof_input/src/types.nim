@@ -9,13 +9,6 @@ export types
 
 #-------------------------------------------------------------------------------
 
-const cellSize*      : int = 128     # 2048         # size of the cells we prove
-const blockSize*     : int = 4096    # 65536        # size of the network block
-
-const cellsPerBlock* : int = blockSize div cellSize
-
-#-------------------------------------------------------------------------------
-
 type Entropy* = F
 type Hash*    = F
 type Root*    = Hash
@@ -110,5 +103,14 @@ type
   GlobalConfig* = object
     maxDepth*      : int      # maximum depth of the big merkle tree (log2 of maximum numbers of cells per slot)
     maxLog2NSlots* : int      # log2 of maximum number of slots per dataset
+    cellSize*      : int      # size of the cells we prove (2048)
+    blockSize*     : int      # size of the network block (65536)
+
+#-------------------------------------------------------------------------------
+
+func cellsPerBlock*(glob: GlobalConfig): int = 
+  let k = (glob.blockSize div glob.cellSize)
+  assert( k * glob.cellSize == glob.blockSize , "block size is not divisible by cell size" )
+  return k
 
 #-------------------------------------------------------------------------------

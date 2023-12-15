@@ -50,7 +50,7 @@ when isMainModule:
 
   let slotIdx  = 3
   let fakedata = DataSource(kind: FakeData, seed: 12345)
-  let globcfg  = GlobalConfig( maxDepth: 16, maxLog2NSlots: 5)  
+  let globcfg  = GlobalConfig( maxDepth: 16, maxLog2NSlots: 5, cellSize: 128, blockSize: 4096)  
   let dsetcfg  = DataSetConfig( nCells: 256, nSlots: 5, nSamples: 10, dataSrc: fakedata)                      
   let entropy  = toF( 1234567 )
   let prfInput = generateProofInput(globcfg, dsetcfg, slotIdx, entropy)
