@@ -12,14 +12,12 @@ import types
 #
 
 const exSlotCfg = 
-  SlotConfig( nCells:   256  # 1024
-            , nSamples: 5    # 20
+  SlotConfig( nCells:   256  
+            , nSamples: 5    
             , dataSrc:  DataSource(kind: FakeData, seed: 12345)
             )
 
 #-------------------------------------------------------------------------------
-
-# (10852671575406741732, 3735945064, 2557891771)
 
 {.overflowChecks: off.}
 proc genFakeCell(globcfg: GlobalConfig, cfg: SlotConfig, seed: Seed, idx: CellIdx): Cell  =
