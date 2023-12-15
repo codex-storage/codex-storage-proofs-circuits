@@ -15,7 +15,7 @@ CLI_ARGS="--depth=$MAXDEPTH \
  --ncells=$NCELLS \
  --index=$SLOTINDEX"
 
-if [[ "$1" =~ "--export" ]]
+if [[ "$1" == "--export" ]]
 then
   echo "exporting CLI_ARGS"
   export CLI_ARGS

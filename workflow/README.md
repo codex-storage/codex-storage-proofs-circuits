@@ -50,11 +50,14 @@ You can edit `params.sh` to your taste before running the workflow scripts.
 
 ### Compile the circuit
 
-First create the main component:
+Create a build directory so we don't pollute the repo:
 
     $ mkdir -p build
     $ cd build
-    $ source ./cli_args.sh && ../../reference/nim/proof_input/cli $CLI_ARGS -v --circom="proof_main.circom"
+
+After that, the first real step is to create the main component:
+
+    $ source ../cli_args.sh && ../../reference/nim/proof_input/cli $CLI_ARGS -v --circom="proof_main.circom"
 
 Then compile the circuit:
 
