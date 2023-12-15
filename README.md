@@ -11,8 +11,10 @@ Repo organization
 - `README.md` - this document
 - `circuit/` - the proof circuit (`circom` code)
 - `reference/haskell/` - Haskell reference implementation of the proof input generation
-- `reference/nim/` - Nim reference implementation of the proof input generation
+- `reference/nim/proof_input/` - Nim reference implementation of the proof input generation
+- `reference/nim/testvectors/` - Nim script to generate test vectors for Poseidon2 sponge hash
 - `test/` - tests for (some parts of the) circuit (using the `r1cs-solver` tool)
+- `workflow/` - description and script for the full proof workflow
 
 
 Setup
