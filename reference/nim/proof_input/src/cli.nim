@@ -31,6 +31,7 @@ type FullConfig = object
   entropy:     int
   outFile:     string
   circomFile:  string
+  verbose:     bool
 
 const defGlobCfg = 
   GlobalConfig( maxDepth:       32
@@ -53,6 +54,7 @@ const defFullCfg =
             , outFile:    ""
             , circomFile: ""
             , entropy:    1234567
+            , verbose:    false
             )
 
 #-------------------------------------------------------------------------------
@@ -64,8 +66,8 @@ proc printHelp() =
   echo "available options:"
   echo " -d, --depth      = <maxdepth>      : maximum depth of the slot tree (eg. 32)"
   echo " -N, --maxslots   = <maxslots>      : maximum number of slots (eg. 256)"
-  echo " -c, --cellSize   = <cellSize>      : cell size in bytes (eg. 2048)"
-  echo " -b, --blockSize  = <blockSize>     : block size in bytes (eg. 65536)"
+  echo " -c, --cellsize   = <cellSize>      : cell size in bytes (eg. 2048)"
+  echo " -b, --blocksize  = <blockSize>     : block size in bytes (eg. 65536)"
   echo " -s, --nslots     = <nslots>        : number of slots in the dataset (eg. 13)"
   echo " -n, --nsamples   = <nsamples>      : number of samples we prove (eg. 100)"
   echo " -e, --entropy    = <entropy>       : external randomness (eg. 1234567)"
@@ -103,10 +105,11 @@ proc parseCliOptions(): FullConfig =
       case key
 
       of "h", "help"      : printHelp()
+      of "v", "verbose"   : fullCfg.verbose       = true
       of "d", "depth"     : globCfg.maxDepth      = parseInt(value) 
       of "N", "maxslots"  : globCfg.maxLog2NSlots = ceilingLog2(parseInt(value))
-      of "c", "cellSize"  : globCfg.cellSize      = checkPowerOfTwo(parseInt(value),"cellSize")
-      of "b", "blockSize" : globCfg.blockSize     = checkPowerOfTwo(parseInt(value),"blockSize")
+      of "c", "cellsize"  : globCfg.cellSize      = checkPowerOfTwo(parseInt(value),"cellSize")
+      of "b", "blocksize" : globCfg.blockSize     = checkPowerOfTwo(parseInt(value),"blockSize")
       of "s", "nslots"    : dsetCfg.nSlots        = parseInt(value)
       of "n", "nsamples"  : dsetCfg.nsamples      = parseInt(value)
       of "e", "entropy"   : fullCfg.entropy       = parseInt(value)
@@ -132,6 +135,23 @@ proc parseCliOptions(): FullConfig =
 
 #-------------------------------------------------------------------------------
 
+proc printConfig(fullCfg: FullConfig) =
+
+  let globCfg = fullCfg.globCfg
+  let dsetCfg = fullCfg.dsetCfg
+
+  echo "maxDepth   = " & ($globCfg.maxDepth)
+  echo "maxSlots   = " & ($pow2(globCfg.maxLog2NSlots))
+  echo "cellSize   = " & ($globCfg.cellSize)
+  echo "blockSize  = " & ($globCfg.blockSize)
+  echo "nSamples   = " & ($dsetCfg.nSamples)
+  echo "entropy    = " & ($fullCfg.entropy)
+  echo "slotIndex  = " & ($fullCfg.slotIndex)
+  echo "nCells     = " & ($dsetCfg.ncells)
+  echo "dataSource = " & ($dsetCfg.dataSrc)
+
+#-------------------------------------------------------------------------------
+
 proc writeCircomMainComponent(fullCfg: FullConfig, fname: string) = 
   let blockTreeDepth     = exactLog2(fullCfg.globCfg.blockSize div fullCfg.globCfg.cellSize)
   let nFieldElemsPerCell = (fullCfg.globCfg.cellSize + 30) div 31
@@ -150,7 +170,7 @@ proc writeCircomMainComponent(fullCfg: FullConfig, fname: string) =
   f.writeLine("pragma circom 2.0.0;")
   f.writeLine("include \"sample_cells.circom\";")
   f.writeLine("// SampleAndProven( maxDepth, maxLog2NSlots, blockTreeDepth, nFieldElemsPerCell, nSamples )")
-  f.writeLine("component main {public [entropy,dataSetRoot,slotIndex]} = SampleAndProve" & ($params) & ");")
+  f.writeLine("component main {public [entropy,dataSetRoot,slotIndex]} = SampleAndProve" & ($params) & ";")
 
 #-------------------------------------------------------------------------------
 
@@ -158,6 +178,9 @@ when isMainModule:
 
   let fullCfg = parseCliOptions()
   # echo fullCfg
+
+  if fullCfg.verbose:
+    printConfig(fullCfg)
 
   if fullCfg.circomFile == "" and fullCfg.outFile == "":
     echo "nothing do!"
