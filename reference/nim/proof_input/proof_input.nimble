@@ -8,4 +8,4 @@ bin           = @["cli","testmain"]
 
 requires "nim >= 1.6.0"
 requires "https://github.com/mratsim/constantine"
-requires "https://github.com/codex-storage/nim-poseidon2#596f7b18070b44ca0bf305bf9bdf1dc4f6011181"
+requires "https://github.com/codex-storage/nim-poseidon2#9be7b0c134e64e3d57a38520a32af93a55a37c44"

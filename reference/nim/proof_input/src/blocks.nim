@@ -39,7 +39,7 @@ func splitBlockIntoCells( globcfg: GlobalConfig, blockData: openArray[byte] ): s
 func hashNetworkBlockOpen( globcfg: GlobalConfig, blockData: openArray[byte] ): Hash = 
   let cells  = splitBlockIntoCells(globcfg, blockData)
   let leaves = collect( newSeq , (for i in 0..<cellsPerBlock(globcfg): hashCell(globcfg, cells[i]) ))
-  return merkleRoot(leaves)
+  return Merkle.digest(leaves) # merkleRoot(leaves)
 
 func hashNetworkBlock*(globcfg: GlobalConfig, blockData: Block): Hash = 
   hashNetworkBlockOpen(globcfg, blockData)

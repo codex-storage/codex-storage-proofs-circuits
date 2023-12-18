@@ -11,6 +11,7 @@ import constantine/math/arithmetic
 
 import poseidon2/types
 import poseidon2/merkle
+import poseidon2/io
 
 import types
 import blocks
