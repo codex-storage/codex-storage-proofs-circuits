@@ -14,6 +14,29 @@ To run the full workflow:
 NOTE: the examples below assume `bash`. In particular, it won't work with `zsh` 
 (which is the dafault on newer macOS)! Because, you know, reasons...
 
+### Some measurements
+
+Approximate time to run this on an M2 (8+4 cores), with 10 samples:
+
+- compiling the circuit: 8 seconds 
+- circuit-specific setup (with 1 contributor): 85 seconds
+- size of the `.zkey` file (only 1 contributor): 110 megabytes
+- proving with `snarkjs` (slow): 7.7 seconds
+
+Same with 50 samples:
+
+- compiling: 37 seconds
+- circuit-specific setup: ~420 seconds
+- `.zkey` file: 525 megabytes
+- snarkjs prove: 34 seconds
+
+And with 100 samples:
+- compiling: 76 seconds
+- circuit-specific setup: ~1000 seconds
+- `.zkey` file
+- snarkjs prove: 76 seconds
+
+
 ### Preliminaries
 
 - install `circom`, `snarkjs`, `rapidsnark`: <https://docs.circom.io/getting-started/installation>
@@ -70,6 +93,11 @@ the whole process.
 
     $ snarkjs groth16 setup proof_main.r1cs ../../ceremony/powersOfTau28_hez_final_21.ptau proof_main_0000.zkey
     $ snarkjs zkey contribute proof_main_0000.zkey proof_main_0001.zkey --name="1st Contributor Name"
+
+NOTE: with large circuits, javascript can run out of heap. You can increase the
+heap limit with:
+
+    $ NODE_OPTIONS="--max-old-space-size=8192" snarkjs groth16 setup <...>
 
 You can add more contributors here if you want.
 

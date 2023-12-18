@@ -1,6 +1,6 @@
 #!/bin/bash
 
-MAXDEPTH=16        # maximum depth of the slot tree 
+MAXDEPTH=32        # maximum depth of the slot tree 
 MAXSLOTS=256       # maximum number of slots  
 CELLSIZE=2048      # cell size in bytes 
 BLOCKSIZE=65536    # block size in bytes 
