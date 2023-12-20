@@ -90,7 +90,7 @@ jobs:
           nimble build -d:release cli
           cd ../../../
 
-      - name: Compile the circuit - work!
+      - name: Compile the circuit
         run: |
           cd workflow
           mkdir -p build
