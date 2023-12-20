@@ -22,10 +22,6 @@ on:
         description: 'Number of samples to prove'
         default: '5'
 
-      entropy:
-        description: 'External randomness'
-        default: '1234567'
-
       seed:
         description: 'Seed for creating fake data'
         default: '12345'
@@ -84,7 +80,9 @@ jobs:
 
       - name: Setup CLI arguments
         run: |
-          echo "CLI_ARGS=--maxDepth=${{ github.event.inputs.maxDepth }} --maxSlots=${{ github.event.inputs.maxSlots }} --cellSize=${{ github.event.inputs.cellSize }} --blockSize=${{ github.event.inputs.blockSize }} --nSamples=${{ github.event.inputs.nSamples }} --entropy=${{ github.event.inputs.entropy }} --seed=${{ github.event.inputs.seed }} --nSlots=${{ github.event.inputs.nSlots }} --slotIndex=${{ github.event.inputs.slotIndex }} --nCells=${{ github.event.inputs.nCells }}" >> $GITHUB_ENV
+          ENTROPY=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 10 | head -n 1)
+          echo "Entropy: $ENTROPY"
+          echo "CLI_ARGS=--maxDepth=${{ github.event.inputs.maxDepth }} --maxSlots=${{ github.event.inputs.maxSlots }} --cellSize=${{ github.event.inputs.cellSize }} --blockSize=${{ github.event.inputs.blockSize }} --nSamples=${{ github.event.inputs.nSamples }} --entropy=$ENTROPY --seed=${{ github.event.inputs.seed }} --nSlots=${{ github.event.inputs.nSlots }} --slotIndex=${{ github.event.inputs.slotIndex }} --nCells=${{ github.event.inputs.nCells }}" >> $GITHUB_ENV
 
       - name: Build CLI Proof Generator
         run: |
