@@ -1,5 +1,6 @@
 name: Generates circuit assets
 on:
+  pull_request:
   workflow_dispatch:
     inputs:
       maxDepth:
@@ -80,7 +81,7 @@ jobs:
 
       - name: Setup CLI arguments
         run: |
-          ENTROPY=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 10 | head -n 1)
+          ENTROPY="asdf"
           echo "Entropy: $ENTROPY"
           echo "CLI_ARGS=--maxDepth=${{ github.event.inputs.maxDepth }} --maxSlots=${{ github.event.inputs.maxSlots }} --cellSize=${{ github.event.inputs.cellSize }} --blockSize=${{ github.event.inputs.blockSize }} --nSamples=${{ github.event.inputs.nSamples }} --entropy=$ENTROPY --seed=${{ github.event.inputs.seed }} --nSlots=${{ github.event.inputs.nSlots }} --slotIndex=${{ github.event.inputs.slotIndex }} --nCells=${{ github.event.inputs.nCells }}" >> $GITHUB_ENV
 
