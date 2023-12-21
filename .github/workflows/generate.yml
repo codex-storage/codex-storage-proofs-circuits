@@ -87,15 +87,14 @@ jobs:
 
       - name: Build CLI Proof Generator
         run: |
-          cd ../reference/nim/proof_input/
+          cd reference/nim/proof_input/
           nimble build -d:release cli
           cd ../../../
 
       - name: Compile the circuit
         run: |
-          cd workflow
-          mkdir -p build
-          cd build
+          mkdir -p workflow/build
+          cd workflow/build
           ../../reference/nim/proof_input/cli $CLI_ARGS -v --circom="proof_main.circom"
           circom --r1cs --wasm --O2 -l../../circuit proof_main.circom
 
