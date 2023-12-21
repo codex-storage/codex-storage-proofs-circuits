@@ -90,26 +90,26 @@ jobs:
           cd reference/nim/proof_input/
           nimble -y build -d:release cli
           cd ../../../
-
-      - name: Compile the circuit
-        run: |
-          mkdir -p workflow/build
-          cd workflow/build
-          ../../reference/nim/proof_input/cli $CLI_ARGS -v --circom="proof_main.circom"
-          circom --r1cs --wasm --O2 -l../../circuit proof_main.circom
-
-      - name: Circuit setup
-        run: |
-          wget -O ceremony.ptau -P .. ${{ env.ceremony_source }}
-          NODE_OPTIONS="--max-old-space-size=8192" snarkjs groth16 setup proof_main.r1cs ../ceremony.ptau proof_main_0000.zkey
-          mv proof_main_0000.zkey proof_main.zkey
-          snarkjs zkey export verificationkey proof_main.zkey proof_main_verification_key.json
-          snarkjs zkey export solidityverifier proof_main.zkey verifier.sol
-          cd ..
-
-      - name: Upload artifact
-        uses: actions/upload-artifact@v3
-        with:
-          name: circuit-assets
-          path: build/
-          retention-days: 5
+#
+#      - name: Compile the circuit
+#        run: |
+#          mkdir -p workflow/build
+#          cd workflow/build
+#          ../../reference/nim/proof_input/cli $CLI_ARGS -v --circom="proof_main.circom"
+#          circom --r1cs --wasm --O2 -l../../circuit proof_main.circom
+#
+#      - name: Circuit setup
+#        run: |
+#          wget -O ceremony.ptau -P .. ${{ env.ceremony_source }}
+#          NODE_OPTIONS="--max-old-space-size=8192" snarkjs groth16 setup proof_main.r1cs ../ceremony.ptau proof_main_0000.zkey
+#          mv proof_main_0000.zkey proof_main.zkey
+#          snarkjs zkey export verificationkey proof_main.zkey proof_main_verification_key.json
+#          snarkjs zkey export solidityverifier proof_main.zkey verifier.sol
+#          cd ..
+#
+#      - name: Upload artifact
+#        uses: actions/upload-artifact@v3
+#        with:
+#          name: circuit-assets
+#          path: build/
+#          retention-days: 5
