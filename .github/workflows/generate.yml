@@ -1,6 +1,5 @@
 name: Generates circuit assets
 on:
-  pull_request:
   workflow_dispatch:
     inputs:
       maxDepth:
