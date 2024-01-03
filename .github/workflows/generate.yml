@@ -1,6 +1,5 @@
 name: Generates circuit assets
 on:
-  pull_request:
   workflow_dispatch:
     inputs:
       maxDepth:
@@ -38,10 +37,10 @@ on:
       nCells:
         description: 'Number of cells in this slot'
         default: '512'
-#
-#      ceremonyContribution:
-#        description: 'Input into the circuit ceremony setup'
-#        default: 'Let the Codex rock!'
+
+      ceremonyContribution:
+        description: 'Input into the circuit ceremony setup'
+        default: 'Let the Codex rock!'
 
 env:
   nim_version: 1.6.14
@@ -81,7 +80,7 @@ jobs:
 
       - name: Setup CLI arguments
         run: |
-          ENTROPY="asdf"
+          ENTROPY="${{ github.run_id }}-${{ github.run_attempt }}"
           echo "Entropy: $ENTROPY"
           echo "CLI_ARGS=--maxDepth=${{ github.event.inputs.maxDepth }} --maxSlots=${{ github.event.inputs.maxSlots }} --cellSize=${{ github.event.inputs.cellSize }} --blockSize=${{ github.event.inputs.blockSize }} --nSamples=${{ github.event.inputs.nSamples }} --entropy=$ENTROPY --seed=${{ github.event.inputs.seed }} --nSlots=${{ github.event.inputs.nSlots }} --slotIndex=${{ github.event.inputs.slotIndex }} --nCells=${{ github.event.inputs.nCells }}" >> $GITHUB_ENV
 
@@ -90,26 +89,28 @@ jobs:
           cd reference/nim/proof_input/
           nimble -y build -d:release cli
           cd ../../../
-#
-#      - name: Compile the circuit
-#        run: |
-#          mkdir -p workflow/build
-#          cd workflow/build
-#          ../../reference/nim/proof_input/cli $CLI_ARGS -v --circom="proof_main.circom"
-#          circom --r1cs --wasm --O2 -l../../circuit proof_main.circom
-#
-#      - name: Circuit setup
-#        run: |
-#          wget -O ceremony.ptau -P .. ${{ env.ceremony_source }}
-#          NODE_OPTIONS="--max-old-space-size=8192" snarkjs groth16 setup proof_main.r1cs ../ceremony.ptau proof_main_0000.zkey
-#          mv proof_main_0000.zkey proof_main.zkey
-#          snarkjs zkey export verificationkey proof_main.zkey proof_main_verification_key.json
-#          snarkjs zkey export solidityverifier proof_main.zkey verifier.sol
-#          cd ..
-#
-#      - name: Upload artifact
-#        uses: actions/upload-artifact@v3
-#        with:
-#          name: circuit-assets
-#          path: build/
-#          retention-days: 5
+
+      - name: Compile the circuit
+        run: |
+          mkdir -p workflow/build
+          cd workflow/build
+          ../../reference/nim/proof_input/cli $CLI_ARGS -v --circom="proof_main.circom"
+          circom --r1cs --wasm --O2 -l../../circuit proof_main.circom
+
+      - name: Circuit setup
+        run: |
+          wget -O ceremony.ptau -P .. ${{ env.ceremony_source }}
+          NODE_OPTIONS="--max-old-space-size=8192" snarkjs groth16 setup proof_main.r1cs ../ceremony.ptau proof_main_0000.zkey
+          NODE_OPTIONS="--max-old-space-size=8192" snarkjs zkey contribute proof_main_0000.zkey proof_main_0001.zkey --name="External Contribution" -e="${{ github.event.inputs.ceremonyContribution }}"
+          rm proof_main_0000.zkey
+          mv proof_main_0001.zkey proof_main.zkey
+          snarkjs zkey export verificationkey proof_main.zkey proof_main_verification_key.json
+          snarkjs zkey export solidityverifier proof_main.zkey verifier.sol
+          cd ..
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: circuit-assets
+          path: build/
+          retention-days: 5
