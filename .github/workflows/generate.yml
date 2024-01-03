@@ -1,0 +1,118 @@
+name: Generates circuit assets
+on:
+  workflow_dispatch:
+    inputs:
+      maxDepth:
+        description: 'Maximum depth of the slot tree'
+        default: '32'
+
+      maxSlots:
+        description: 'Maximum number of slots'
+        default: '256'
+
+      cellSize:
+        description: 'Cell size in bytes'
+        default: '2048'
+
+      blockSize:
+        description: 'Block size in bytes'
+        default: '65536'
+
+      nSamples:
+        description: 'Number of samples to prove'
+        default: '5'
+
+      seed:
+        description: 'Seed for creating fake data'
+        default: '12345'
+
+      nSlots:
+        description: 'Number of slots in the dataset'
+        default: '11'
+
+      slotIndex:
+        description: 'Which slot we prove (0..NSLOTS-1)'
+        default: '3'
+
+      nCells:
+        description: 'Number of cells in this slot'
+        default: '512'
+
+      ceremonyContribution:
+        description: 'Input into the circuit ceremony setup'
+        default: 'Let the Codex rock!'
+
+env:
+  nim_version: 1.6.14
+  nodejs_version: 18.15
+  ceremony_source: https://storage.googleapis.com/zkevm/ptau/powersOfTau28_hez_final_21.ptau
+jobs:
+  build:
+    defaults:
+      run:
+        shell: bash --noprofile --norc -e -o pipefail {0}
+
+#    runs-on: buildjet-16vcpu-ubuntu-2204
+    runs-on: ubuntu-latest
+    timeout-minutes: 80
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v3
+
+      - name: Setup Circom
+        uses: baptiste0928/cargo-install@v2
+        with:
+          crate: circom
+          git: https://github.com/iden3/circom.git
+
+      - name: Setup Nim
+        uses: jiro4989/setup-nim-action@v1
+        with:
+          nim-version: ${{ env.nim_version }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ env.nodejs_version }}
+
+      - name: Install SnarkJS
+        run: npm install -g snarkjs
+
+      - name: Setup CLI arguments
+        run: |
+          ENTROPY="${{ github.run_id }}"
+          echo "Entropy: $ENTROPY"
+          echo "CLI_ARGS=--depth=${{ github.event.inputs.maxDepth }} --maxslots=${{ github.event.inputs.maxSlots }} --cellsize=${{ github.event.inputs.cellSize }} --blocksize=${{ github.event.inputs.blockSize }} --nsamples=${{ github.event.inputs.nSamples }} --entropy="$ENTROPY" --seed=${{ github.event.inputs.seed }} --nslots=${{ github.event.inputs.nSlots }} --index=${{ github.event.inputs.slotIndex }} --ncells=${{ github.event.inputs.nCells }}" >> $GITHUB_ENV
+
+      - name: Build CLI Proof Generator
+        run: |
+          cd reference/nim/proof_input/
+          nimble -y build -d:release cli
+          cd ../../../
+
+      - name: Compile the circuit
+        run: |
+          mkdir -p workflow/build
+          cd workflow/build
+          ../../reference/nim/proof_input/cli $CLI_ARGS -v --circom="proof_main.circom"
+          circom --r1cs --wasm --O2 -l../../circuit proof_main.circom
+
+      - name: Circuit setup
+        run: |
+          cd workflow
+          wget -q -O ceremony.ptau ${{ env.ceremony_source }}
+          cd build
+          NODE_OPTIONS="--max-old-space-size=8192" snarkjs groth16 setup proof_main.r1cs ../ceremony.ptau proof_main_0000.zkey
+          NODE_OPTIONS="--max-old-space-size=8192" snarkjs zkey contribute proof_main_0000.zkey proof_main_0001.zkey --name="External Contribution" -e="${{ github.event.inputs.ceremonyContribution }}"
+          rm proof_main_0000.zkey
+          mv proof_main_0001.zkey proof_main.zkey
+          snarkjs zkey export verificationkey proof_main.zkey proof_main_verification_key.json
+          snarkjs zkey export solidityverifier proof_main.zkey verifier.sol
+          cd ..
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: circuit-assets
+          path: workflow/build
+          retention-days: 5
