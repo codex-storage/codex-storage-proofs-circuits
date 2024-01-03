@@ -114,5 +114,5 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: circuit-assets
-          path: build/
+          path: workflow/build
           retention-days: 5
