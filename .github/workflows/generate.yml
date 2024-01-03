@@ -99,8 +99,7 @@ jobs:
 
       - name: Circuit setup
         run: |
-          pwd
-          cd ..
+          cd workflow
           wget -q -O ceremony.ptau ${{ env.ceremony_source }}
           cd build
           NODE_OPTIONS="--max-old-space-size=8192" snarkjs groth16 setup proof_main.r1cs ../ceremony.ptau proof_main_0000.zkey
