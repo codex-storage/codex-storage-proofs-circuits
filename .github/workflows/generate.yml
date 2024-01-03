@@ -82,7 +82,7 @@ jobs:
         run: |
           ENTROPY="${{ github.run_id }}-${{ github.run_attempt }}"
           echo "Entropy: $ENTROPY"
-          echo "CLI_ARGS=--maxDepth=${{ github.event.inputs.maxDepth }} --maxSlots=${{ github.event.inputs.maxSlots }} --cellSize=${{ github.event.inputs.cellSize }} --blockSize=${{ github.event.inputs.blockSize }} --nSamples=${{ github.event.inputs.nSamples }} --entropy=$ENTROPY --seed=${{ github.event.inputs.seed }} --nSlots=${{ github.event.inputs.nSlots }} --slotIndex=${{ github.event.inputs.slotIndex }} --nCells=${{ github.event.inputs.nCells }}" >> $GITHUB_ENV
+          echo "CLI_ARGS=--depth=${{ github.event.inputs.maxDepth }} --maxslots=${{ github.event.inputs.maxSlots }} --cellsize=${{ github.event.inputs.cellSize }} --blocksize=${{ github.event.inputs.blockSize }} --nsamples=${{ github.event.inputs.nSamples }} --entropy="$ENTROPY" --seed=${{ github.event.inputs.seed }} --nslots=${{ github.event.inputs.nSlots }} --slotindex=${{ github.event.inputs.slotIndex }} --ncells=${{ github.event.inputs.nCells }}" >> $GITHUB_ENV
 
       - name: Build CLI Proof Generator
         run: |
