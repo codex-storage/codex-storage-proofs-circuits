@@ -99,7 +99,9 @@ jobs:
 
       - name: Circuit setup
         run: |
-          wget -O ceremony.ptau -P .. ${{ env.ceremony_source }}
+          cd ..
+          wget -q -O ceremony.ptau ${{ env.ceremony_source }}
+          cd build
           NODE_OPTIONS="--max-old-space-size=8192" snarkjs groth16 setup proof_main.r1cs ../ceremony.ptau proof_main_0000.zkey
           NODE_OPTIONS="--max-old-space-size=8192" snarkjs zkey contribute proof_main_0000.zkey proof_main_0001.zkey --name="External Contribution" -e="${{ github.event.inputs.ceremonyContribution }}"
           rm proof_main_0000.zkey
