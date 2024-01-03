@@ -99,6 +99,7 @@ jobs:
 
       - name: Circuit setup
         run: |
+          pwd
           cd ..
           wget -q -O ceremony.ptau ${{ env.ceremony_source }}
           cd build
