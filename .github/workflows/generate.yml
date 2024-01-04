@@ -111,6 +111,15 @@ jobs:
           snarkjs zkey export solidityverifier proof_main.zkey verifier.sol
           cd ..
 
+      - name: Generate proof
+        run: |
+          cd workflow/build/
+          ../../reference/nim/proof_input/cli $CLI_ARGS -v --output=input.json
+          cd proof_main_js
+          node generate_witness.js proof_main.wasm ../input.json ../witness.wtns
+          cd ..
+          snarkjs groth16 prove proof_main.zkey witness.wtns proof.json public.json
+
       - name: Upload artifact
         uses: actions/upload-artifact@v3
         with:
