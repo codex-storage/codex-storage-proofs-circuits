@@ -113,7 +113,7 @@ jobs:
 
       - name: Generate proof
         run: |
-          cd workflow/proof_main_js
+          cd workflow/build/proof_main_js
           node generate_witness.js proof_main.wasm ../input.json ../witness.wtns
           cd ..
           snarkjs groth16 prove proof_main.zkey witness.wtns proof.json public.json
