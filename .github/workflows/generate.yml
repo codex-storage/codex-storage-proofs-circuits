@@ -62,6 +62,7 @@ jobs:
       - name: Setup Circom
         uses: baptiste0928/cargo-install@v2
         with:
+          cache-key: 'invalid-cache-please'
           crate: circom
           git: https://github.com/iden3/circom.git
 
