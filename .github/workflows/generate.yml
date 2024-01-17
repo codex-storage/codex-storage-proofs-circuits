@@ -48,7 +48,7 @@ env:
   ceremony_source: https://storage.googleapis.com/zkevm/ptau/powersOfTau28_hez_final_21.ptau
   s3_bucket_path: proving-key
   circuit_file: workflow/build/proof_main.zkey
-  storage_url: https://ceremony.codex.storage
+  storage_url: https://circuit.codex.storage
   s3_endpoint: ${{ secrets.S3_ENDPOINT }}
   s3_bucket: ${{ secrets.S3_BUCKET }}
   AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
