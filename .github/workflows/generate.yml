@@ -46,6 +46,15 @@ env:
   nim_version: 1.6.14
   nodejs_version: 18.15
   ceremony_source: https://storage.googleapis.com/zkevm/ptau/powersOfTau28_hez_final_21.ptau
+  s3_bucket_path: proving-key
+  circuit_file: workflow/build/proof_main.zkey
+  storage_url: https://circuit.codex.storage
+  s3_endpoint: ${{ secrets.S3_ENDPOINT }}
+  s3_bucket: ${{ secrets.S3_BUCKET }}
+  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
+
 jobs:
   build:
     defaults:
@@ -126,3 +135,18 @@ jobs:
           name: circuit-assets
           path: workflow/build
           retention-days: 5
+
+      - name: Upload to storage
+        run: |
+          # Variables
+          hash=($(shasum -a 256 ${{ env.circuit_file }}))
+          [[ -z "${{ env.s3_bucket_path}}" ]] && storage_file="${hash}" || storage_file="${{ env.s3_bucket_path}}/${hash}"
+          echo "storage_file=${storage_file}" >>$GITHUB_ENV
+          # Upload
+          aws s3 cp ${{ env.circuit_file }} s3://${{ env.s3_bucket }}/${storage_file} --endpoint-url ${{ env.s3_endpoint }}
+
+      - name: Show download URL
+        run: |
+          echo "Download URL: ${{ env.download_url }}"
+        env:
+          download_url: ${{ format('{0}/{1}', env.storage_url, env.storage_file) }}
