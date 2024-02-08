@@ -17,7 +17,7 @@ template Log2(n) {
   signal output mask[n+1];
 
   // mask will be a vector [1,1,1,...1,0,...,0,0]
-  // which can change only where inp == 2^out
+  // which can change only where index == out
 
   var log2 = -1;
   for(var i=0; i<=n; i++) {
