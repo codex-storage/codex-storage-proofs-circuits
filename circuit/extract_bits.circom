@@ -5,12 +5,12 @@ include "misc.circom";
 
 //------------------------------------------------------------------------------
 
-// 
+//
 // extract the lowest `n` bits from a field element.
 //
-// NOTE: this is rather nontrivial, as everything is computed modulo `r`, 
+// NOTE: this is rather nontrivial, as everything is computed modulo `r`,
 // so naive bit decomposition does not work (there are multiple solutions).
-// 
+//
 // TODO: optimize this
 //
 
@@ -33,7 +33,7 @@ template ExtractLowerBits(n) {
   le.out === -1;          // enforce `A < B`, that is, `bits < prime`
 
   // extract the lowest `n` bits
-  for(var i=0; i<n; i++) { 
+  for(var i=0; i<n; i++) {
     tb.out[i] ==> out[i];
   }
 
@@ -66,7 +66,7 @@ template ExtractLowerBits_testfield65537(n) {
   le.out === -1;          // enforce `A < B`, that is, `bits < prime`
 
   // extract the lowest `n` bits
-  for(var i=0; i<n; i++) { 
+  for(var i=0; i<n; i++) {
     tb.out[i] ==> out[i];
   }
 

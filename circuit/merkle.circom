@@ -25,7 +25,7 @@ include "misc.circom";
 //
 
 template RootFromMerklePath( maxDepth ) {
-  
+
   signal input  leaf;
   signal input  pathBits[ maxDepth ];       // bits of the linear index
   signal input  lastBits[ maxDepth ];       // bits of the last linear index `= size-1`
@@ -37,14 +37,14 @@ template RootFromMerklePath( maxDepth ) {
   signal aux[ maxDepth+1 ];
   aux[0] <== leaf;
 
-  // compute which prefixes (in big-endian) of the index is 
+  // compute which prefixes (in big-endian) of the index is
   // the same as the corresponding prefix of the last index
   component eq[ maxDepth ];
   signal isLast[ maxDepth+1 ];
   isLast[ maxDepth ] <== 1;
   for(var i=maxDepth-1; i>=0; i--) {
     eq[i] = IsEqual();
-    eq[i].A <== pathBits[i]; 
+    eq[i].A <== pathBits[i];
     eq[i].B <== lastBits[i];
     isLast[i] <== isLast[i+1] * eq[i].out;
   }
@@ -63,7 +63,7 @@ template RootFromMerklePath( maxDepth ) {
     var R = merklePath[i];
 
     // based on pathBits[i], we switch or not
-    
+
     switch[i]      <== (R-L) * pathBits[i];
     comp[i].key    <== bottom + 2*odd;
     comp[i].inp[0] <== L + switch[i];

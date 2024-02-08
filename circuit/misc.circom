@@ -33,11 +33,11 @@ template IsZero() {
   out <== 1 - inp * inv;
 
   // enfore that either `inp` or `out` must be zero
-  inp*out === 0;             
+  inp*out === 0;
 }
 
 //------------------------------------------------------------------------------
-// check equality of two field elements; that is, computes `(A==B) ? 1 : 0` 
+// check equality of two field elements; that is, computes `(A==B) ? 1 : 0`
 
 template IsEqual() {
   signal input  A,B;
