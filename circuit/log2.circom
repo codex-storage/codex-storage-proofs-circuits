@@ -43,7 +43,7 @@ template Log2(n) {
 //------------------------------------------------------------------------------
 //
 // given an input `inp`, this template computes `out := k` such that 2^k <= inp < 2^{k+1}
-// it also returns the binary decomposition of `inp-1`, and the binary deocmpositiom
+// it also returns the binary decomposition of `inp-1`, and the binary decomposition
 // of the mask `(2^k-1)`
 //
 // we also output a mask vector which is 1 for i=0..k-1, and 0 elsewhere
