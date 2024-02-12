@@ -201,20 +201,6 @@ template Permutation() {
 // the "compression function" takes 2 field elements as input and produces
 // 1 field element as output. It is a trivial application of the permutation.
 
-template Compression() {
-  signal input  inp[2];
-  signal output out;
-
-  component perm = Permutation();
-  perm.inp[0] <== inp[0];
-  perm.inp[1] <== inp[1];
-  perm.inp[2] <== 0;
-
-  perm.out[0] ==> out;
-}
-
-//--------------------------------------
-
 template KeyedCompression() {
   signal input  key;
   signal input  inp[2];
