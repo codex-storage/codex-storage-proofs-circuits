@@ -3,7 +3,8 @@ pragma circom 2.0.0;
 //------------------------------------------------------------------------------
 
 //
-// given two numbers in `n`-bit binary decomposition (little-endian), we compute
+// given two numbers in `n`-bit binary decomposition
+// (least significant bit first), we compute
 //
 //             /  -1   if   A <  B
 //   out  :=  {    0   if   A == B

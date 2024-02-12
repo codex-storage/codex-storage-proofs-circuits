@@ -1,7 +1,7 @@
 pragma circom 2.0.0;
 
 //------------------------------------------------------------------------------
-// decompose an n-bit number into bits
+// decompose an n-bit number into bits (least significant bit first)
 
 template ToBits(n) {
   signal input  inp;

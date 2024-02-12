@@ -14,7 +14,7 @@ include "misc.circom";
 //
 // inputs and outputs:
 //  - leaf:        the leaf hash
-//  - pathBits:    the linear index of the leaf, in binary decomposition (little-endian)
+//  - pathBits:    the linear index of the leaf, in binary decomposition (least significant bit first)
 //  - lastBits:    the index of the last leaf (= nLeaves-1), in binary decomposition
 //  - maskBits:    the bits of the the mask `2^ceilingLog2(size) - 1`
 //  - merklePath:  the Merkle inclusion proof (required hashes, starting from the leaf and ending near the root)
@@ -37,8 +37,8 @@ template RootFromMerklePath( maxDepth ) {
   signal aux[ maxDepth+1 ];
   aux[0] <== leaf;
 
-  // compute which prefixes (in big-endian) of the index is
-  // the same as the corresponding prefix of the last index
+  // compute which binary postfixes of the index is the same as the
+  // corresponding postfix of the last index
   component eq[ maxDepth ];
   signal isLast[ maxDepth+1 ];
   isLast[ maxDepth ] <== 1;

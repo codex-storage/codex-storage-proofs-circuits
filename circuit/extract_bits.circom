@@ -23,7 +23,7 @@ template ExtractLowerBits(n) {
   component tb = ToBits(254);      // note: 2^253 < r < 2^254
   tb.inp <== inp;
 
-  // bits of field prime `r` in little-endian order
+  // bits of field prime `r`, least significant bit first
   var primeBits[254] = [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,0,0,1,0,0,1,1,0,1,0,1,1,1,1,1,0,0,0,0,1,1,1,1,1,0,0,0,0,1,0,1,0,0,0,1,0,0,1,0,0,0,0,1,1,1,0,1,0,0,1,1,1,0,1,1,0,0,1,1,1,1,0,0,0,0,1,0,0,1,0,0,0,0,1,0,1,1,1,1,1,0,0,1,1,0,0,0,0,0,1,0,1,0,0,1,0,1,1,1,0,1,0,0,0,0,1,1,0,1,0,1,0,0,0,0,0,0,1,1,0,0,0,0,0,0,1,0,1,1,0,1,1,0,1,1,0,1,0,0,0,1,0,0,0,0,0,1,0,1,0,0,0,0,1,1,1,0,1,1,0,0,1,0,1,0,0,0,0,0,0,0,1,0,1,1,0,0,0,1,1,0,0,1,0,0,0,0,1,1,1,0,1,0,0,1,1,1,0,0,1,1,1,0,0,1,0,0,0,1,0,0,1,1,0,0,0,0,0,1,1];
 
   // enforce that the binary representation is < r
@@ -56,7 +56,7 @@ template ExtractLowerBits_testfield65537(n) {
   component tb = ToBits(18);      // note: 2^16 < r < 2^18
   tb.inp <== inp;
 
-  // bits of field prime `r` in little-endian order
+  // bits of field prime `r`, least significant bit first
   var primeBits[18] = [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0];
 
   // enforce that the binary representation is < r
