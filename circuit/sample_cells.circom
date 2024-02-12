@@ -104,7 +104,7 @@ log("top root check = ", mtop.recRoot == dataSetRoot);
   lg.inp <== nCellsPerSlot;
   lg.out ==> log2N;
 
-  // NOTE: in general we need the for Merkle prover the binary decomposition
+  // NOTE: in general we need for the Merkle prover the binary decomposition
   // of `nLeaves - 1`. But currently this is in fact a power of two, so we
   // can reuse the binary mask for this. Later we may change this?
   //
