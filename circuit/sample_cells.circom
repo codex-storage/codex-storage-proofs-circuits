@@ -99,10 +99,8 @@ log("top root check = ", mtop.recRoot == dataSetRoot);
   //
   // then we prove the individual sampled cells
 
-  signal log2N;
   component lg = Log2(maxDepth);                          // we allow at most 2^32 cells per slot
   lg.inp <== nCellsPerSlot;
-  lg.out ==> log2N;
 
   // NOTE: in general we need for the Merkle prover the binary decomposition
   // of `nLeaves - 1`. But currently this is in fact a power of two, so we
