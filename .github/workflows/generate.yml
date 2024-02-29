@@ -136,7 +136,7 @@ jobs:
           AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
         run: |
           # Zip
-          zip -q ${{ env.zip_file }} ${{ env.circuit_file }} ${{ env.constraints_file }} ${{ env.wasm_file }}
+          zip -qj ${{ env.zip_file }} ${{ env.circuit_file }} ${{ env.constraints_file }} ${{ env.wasm_file }}
           # Variables
           hash=($(shasum -a 256 ${{ env.zip_file }}))
           [[ -z "${{ env.s3_bucket_path}}" ]] && storage_file="${hash}" || storage_file="${{ env.s3_bucket_path}}/${hash}"
