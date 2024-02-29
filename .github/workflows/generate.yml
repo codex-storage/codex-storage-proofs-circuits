@@ -49,7 +49,7 @@ env:
   s3_bucket_path: proving-key
   circuit_file: workflow/build/proof_main.zkey
   constraints_file: workflow/build/proof_main.r1cs
-  wasm_file: workflow/build/proof_main.wasm
+  wasm_file: workflow/build/proof_main_js/proof_main.wasm
   zip_file: workflow/build/proof_circuit.zip
   storage_url: https://circuit.codex.storage
 
@@ -136,7 +136,7 @@ jobs:
           AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
         run: |
           # Zip
-          zip ${{ env.zip_file }} ${{ env.circuit_file }} ${{ env.constraints_file }} ${{ env.wasm_file }}
+          zip -q ${{ env.zip_file }} ${{ env.circuit_file }} ${{ env.constraints_file }} ${{ env.wasm_file }}
           # Variables
           hash=($(shasum -a 256 ${{ env.zip_file }}))
           [[ -z "${{ env.s3_bucket_path}}" ]] && storage_file="${hash}" || storage_file="${{ env.s3_bucket_path}}/${hash}"
