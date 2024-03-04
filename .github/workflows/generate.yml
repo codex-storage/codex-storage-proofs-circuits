@@ -48,6 +48,9 @@ env:
   ceremony_source: https://storage.googleapis.com/zkevm/ptau/powersOfTau28_hez_final_21.ptau
   s3_bucket_path: proving-key
   circuit_file: workflow/build/proof_main.zkey
+  constraints_file: workflow/build/proof_main.r1cs
+  wasm_file: workflow/build/proof_main_js/proof_main.wasm
+  zip_file: workflow/build/proof_circuit.zip
   storage_url: https://circuit.codex.storage
 
 jobs:
@@ -132,12 +135,14 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
         run: |
+          # Zip
+          zip -qj ${{ env.zip_file }} ${{ env.circuit_file }} ${{ env.constraints_file }} ${{ env.wasm_file }}
           # Variables
-          hash=($(shasum -a 256 ${{ env.circuit_file }}))
+          hash=($(shasum -a 256 ${{ env.zip_file }}))
           [[ -z "${{ env.s3_bucket_path}}" ]] && storage_file="${hash}" || storage_file="${{ env.s3_bucket_path}}/${hash}"
           echo "storage_file=${storage_file}" >>$GITHUB_ENV
           # Upload
-          aws s3 cp ${{ env.circuit_file }} s3://${{ env.s3_bucket }}/${storage_file} --endpoint-url ${{ env.s3_endpoint }}
+          aws s3 cp ${{ env.zip_file }} s3://${{ env.s3_bucket }}/${storage_file} --endpoint-url ${{ env.s3_endpoint }}
           # Add hash to the assets
           echo "\"${hash}\"" > workflow/build/zkey_hash.json
 
