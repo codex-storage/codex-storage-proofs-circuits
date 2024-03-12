@@ -103,7 +103,7 @@ jobs:
           mkdir -p workflow/build
           cd workflow/build
           ../../reference/nim/proof_input/cli $CLI_ARGS -v --circom="proof_main.circom"
-          circom --r1cs --wasm --O2 -l../../circuit proof_main.circom
+          circom --r1cs --wasm --O2 -l../../circuit/lib -l../../circuit/poseidon2 -l../../circuit/codex proof_main.circom
 
       - name: Circuit setup
         run: |

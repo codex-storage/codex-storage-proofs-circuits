@@ -9,7 +9,7 @@ import CircuitCommon
 -- global parameters
 
 circomFile :: FilePath
-circomFile = circuitSourceDir </> "binary_compare.circom"
+circomFile = circuitLibSourceDir </> "binary_compare.circom"
 
 -- | comparing @n@-bit integers
 type GP = Int

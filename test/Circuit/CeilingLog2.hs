@@ -11,7 +11,7 @@ import CircuitCommon
 -- global parameters
 
 circomFile :: FilePath
-circomFile = circuitSourceDir </> "log2.circom"
+circomFile = circuitLibSourceDir </> "log2.circom"
 
 -- `n` = maximum number of bits
 type GP = Int

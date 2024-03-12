@@ -1,7 +1,6 @@
 pragma circom 2.0.0;
 
-include "poseidon2_perm.circom";
-
+include "poseidon2_compr.circom";
 include "misc.circom";
 
 //------------------------------------------------------------------------------
@@ -22,6 +21,24 @@ include "misc.circom";
 //
 // NOTE: we don't check whether the bits are really bits, that's the
 //       responsability of the caller!
+//
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+//
+// Merkle tree convention: Here we use a Codex-specific "safe" Merkle tree convention.
+//
+// This uses a "keyed compression function", where the key depends on:
+// 
+//   - whether we are in the bottommost layer or not
+//   - whether the node we are dealing with has 1 or 2 children (odd or even node)
+// 
+// These are two bits, encoded as numbers in the set {0,1,2,3} 
+// (the lowest bit is 1 if it's the bottom layer, 0 otherwise; the next bit 
+// is 1 if it's an odd node, 0 if even node). Furthermore:
+// 
+//   - in case of an odd node with leaf x, we apply the compression to the pair (x,0)
+//   - in case of a singleton input (the whole Merkle tree is built on a single field element), we also apply one compression
+//   - the keyed compression is defined as applying the permutation to the triple (x,y,key), and extracting the first component of the resulting triple
+//
 //
 
 template RootFromMerklePath( maxDepth ) {

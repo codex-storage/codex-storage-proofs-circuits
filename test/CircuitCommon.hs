@@ -2,7 +2,8 @@
 module CircuitCommon
   ( module R1CS
   , module System.FilePath
-  , circuitSourceDir
+  , circuitRootDir
+  , circuitLibSourceDir
   , toBitsLE , toBitsLE'
   )
   where 
@@ -15,8 +16,11 @@ import R1CS
 
 --------------------------------------------------------------------------------
 
-circuitSourceDir :: FilePath
-circuitSourceDir = "../circuit"
+circuitRootDir :: FilePath
+circuitRootDir = "../circuit"
+
+circuitLibSourceDir :: FilePath
+circuitLibSourceDir = circuitRootDir </> "lib"
 
 --------------------------------------------------------------------------------
 
