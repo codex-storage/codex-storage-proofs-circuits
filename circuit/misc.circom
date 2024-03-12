@@ -1,6 +1,16 @@
 pragma circom 2.0.0;
 
 //------------------------------------------------------------------------------
+
+function FloorLog2(n) {
+  return (n==0) ? -1 : (1 + FloorLog2(n>>1));
+}
+
+function CeilLog2(n) {
+  return (n==0) ? 0 : (1 + FloorLog2(n-1));
+}
+
+//------------------------------------------------------------------------------
 // decompose an n-bit number into bits (least significant bit first)
 
 template ToBits(n) {
