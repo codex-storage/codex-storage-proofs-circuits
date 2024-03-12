@@ -41,3 +41,57 @@ template BinaryCompare(n) {
 }
 
 //------------------------------------------------------------------------------
+
+//
+// given two numbers in `n`-bit binary decomposition (little-endian), we compute
+//
+//   out  :=  (A <= B) ? 1 : 0
+//
+// NOTE: we don't check that the digits are indeed binary;
+//       that's the responsibility of the caller!
+//
+
+template BinaryLessOrEqual(n) {
+  signal input  A[n];
+  signal input  B[n];
+  signal output out;
+
+  var phalf = 1/2;       // +1/2 as field element
+  var mhalf = -phalf;    // -1/2 as field element
+
+  component cmp = BinaryCompare(n);
+  cmp.A <== A;
+  cmp.B <== B;
+
+  var x = cmp.out;
+  out <== mhalf * (x-1) * (x+2);
+}
+
+//------------------------------------------------------------------------------
+
+//
+// given two numbers in `n`-bit binary decomposition (little-endian), we compute
+//
+//   out  :=  (A >= B) ? 1 : 0
+//
+// NOTE: we don't check that the digits are indeed binary;
+//       that's the responsibility of the caller!
+//
+
+template BinaryGreaterOrEqual(n) {
+  signal input  A[n];
+  signal input  B[n];
+  signal output out;
+
+  var phalf = 1/2;       // +1/2 as field element
+  var mhalf = -phalf;    // -1/2 as field element
+
+  component cmp = BinaryCompare(n);
+  cmp.A <== A;
+  cmp.B <== B;
+
+  var x = cmp.out;
+  out <== mhalf * (x+1) * (x-2);
+}
+
+//------------------------------------------------------------------------------
