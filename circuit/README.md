@@ -21,7 +21,7 @@ In `poseidon2`
 - `poseidon2_hash.circom` - compute Poseidon2 hash with sponge construction
 - `poseidon2_sponge.circom` - generic sponge construction
 - `poseidon2_perm.circom` - the Poseidon2 permutation
-- `poseidon2_compr.circom` - the comoression function
+- `poseidon2_compr.circom` - the compression function
 
 In `lib`:
 
