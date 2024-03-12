@@ -37,8 +37,11 @@ template RootFromMerklePath( maxDepth ) {
   signal aux[ maxDepth+1 ];
   aux[0] <== leaf;
 
-  // compute which binary postfixes of the index is the same as the
-  // corresponding postfix of the last index
+  // Determine whether nodes from the path are last in their row and are odd,
+  // by computing which binary prefixes of the index are the same as the
+  // corresponding prefix of the last index.
+  // This is done in reverse bit order, because pathBits and lastBits have the
+  // least significant bit first.
   component eq[ maxDepth ];
   signal isLast[ maxDepth+1 ];
   isLast[ maxDepth ] <== 1;
