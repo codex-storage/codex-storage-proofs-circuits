@@ -21,16 +21,16 @@ include "misc.circom";
 //
 
 template CalculateCellIndexBits( maxLog2N ) {
-  
+
   signal input  entropy;
   signal input  slotRoot;
   signal input  counter;
   signal input  cellIndexBitMask[maxLog2N];      // bit mask for the cell index range
-  
+
   signal output indexBits[maxLog2N];
 
   // calculate the hash
-  component pos = Poseidon2_hash_rate2( 3 );     // input is 3 field elements 
+  component pos = Poseidon2_hash_rate2( 3 );     // input is 3 field elements
   signal hash;
   pos.inp[0] <== entropy;
   pos.inp[1] <== slotRoot;
@@ -49,7 +49,7 @@ template CalculateCellIndexBits( maxLog2N ) {
 
 //------------------------------------------------------------------------------
 
-// 
+//
 // sample `nSamples` number of cells; calculate their hashes;
 // reconstruct the slot root using the Merkle paths, then
 // the dataset root too, and checks if everything is consistent.
@@ -76,7 +76,7 @@ template SampleAndProve( maxDepth, maxLog2NSlots, blockTreeDepth, nFieldElemsPer
 
   // -------------------------------------------------------
   //
-  // first we prove the inclusion of the slot root in the dataset-level 
+  // first we prove the inclusion of the slot root in the dataset-level
   // (small) Merkle tree
 
   component tbtp = ToBits( maxLog2NSlots );
@@ -94,17 +94,15 @@ template SampleAndProve( maxDepth, maxLog2NSlots, blockTreeDepth, nFieldElemsPer
 log("top root check = ", mtop.recRoot == dataSetRoot);
 
   mtop.recRoot === dataSetRoot;
-  
+
   // -------------------------------------------------------
   //
   // then we prove the individual sampled cells
 
-  signal log2N;
   component lg = Log2(maxDepth);                          // we allow at most 2^32 cells per slot
   lg.inp <== nCellsPerSlot;
-  lg.out ==> log2N;
 
-  // NOTE: in general we need the for Merkle prover the binary decomposition
+  // NOTE: in general we need for the Merkle prover the binary decomposition
   // of `nLeaves - 1`. But currently this is in fact a power of two, so we
   // can reuse the binary mask for this. Later we may change this?
   //
@@ -118,7 +116,7 @@ log("top root check = ", mtop.recRoot == dataSetRoot);
 
     calci[cnt] = CalculateCellIndexBits( maxDepth );
     prove[cnt] = ProveSingleCell( nFieldElemsPerCell, blockTreeDepth, maxDepth );
-  
+
     // calci[cnt].cellIndexBitMask <== lg.mask;
     for(var i=0; i<maxDepth; i++) { calci[cnt].cellIndexBitMask[i] <== lg.mask[i]; }
 

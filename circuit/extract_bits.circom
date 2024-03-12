@@ -5,12 +5,12 @@ include "misc.circom";
 
 //------------------------------------------------------------------------------
 
-// 
+//
 // extract the lowest `n` bits from a field element.
 //
-// NOTE: this is rather nontrivial, as everything is computed modulo `r`, 
+// NOTE: this is rather nontrivial, as everything is computed modulo `r`,
 // so naive bit decomposition does not work (there are multiple solutions).
-// 
+//
 // TODO: optimize this
 //
 
@@ -23,7 +23,7 @@ template ExtractLowerBits(n) {
   component tb = ToBits(254);      // note: 2^253 < r < 2^254
   tb.inp <== inp;
 
-  // bits of field prime `r` in little-endian order
+  // bits of field prime `r`, least significant bit first
   var primeBits[254] = [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,0,0,1,0,0,1,1,0,1,0,1,1,1,1,1,0,0,0,0,1,1,1,1,1,0,0,0,0,1,0,1,0,0,0,1,0,0,1,0,0,0,0,1,1,1,0,1,0,0,1,1,1,0,1,1,0,0,1,1,1,1,0,0,0,0,1,0,0,1,0,0,0,0,1,0,1,1,1,1,1,0,0,1,1,0,0,0,0,0,1,0,1,0,0,1,0,1,1,1,0,1,0,0,0,0,1,1,0,1,0,1,0,0,0,0,0,0,1,1,0,0,0,0,0,0,1,0,1,1,0,1,1,0,1,1,0,1,0,0,0,1,0,0,0,0,0,1,0,1,0,0,0,0,1,1,1,0,1,1,0,0,1,0,1,0,0,0,0,0,0,0,1,0,1,1,0,0,0,1,1,0,0,1,0,0,0,0,1,1,1,0,1,0,0,1,1,1,0,0,1,1,1,0,0,1,0,0,0,1,0,0,1,1,0,0,0,0,0,1,1];
 
   // enforce that the binary representation is < r
@@ -33,7 +33,7 @@ template ExtractLowerBits(n) {
   le.out === -1;          // enforce `A < B`, that is, `bits < prime`
 
   // extract the lowest `n` bits
-  for(var i=0; i<n; i++) { 
+  for(var i=0; i<n; i++) {
     tb.out[i] ==> out[i];
   }
 
@@ -56,7 +56,7 @@ template ExtractLowerBits_testfield65537(n) {
   component tb = ToBits(18);      // note: 2^16 < r < 2^18
   tb.inp <== inp;
 
-  // bits of field prime `r` in little-endian order
+  // bits of field prime `r`, least significant bit first
   var primeBits[18] = [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0];
 
   // enforce that the binary representation is < r
@@ -66,7 +66,7 @@ template ExtractLowerBits_testfield65537(n) {
   le.out === -1;          // enforce `A < B`, that is, `bits < prime`
 
   // extract the lowest `n` bits
-  for(var i=0; i<n; i++) { 
+  for(var i=0; i<n; i++) {
     tb.out[i] ==> out[i];
   }
 

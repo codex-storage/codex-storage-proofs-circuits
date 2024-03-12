@@ -1,7 +1,6 @@
 pragma circom 2.0.0;
 
 //------------------------------------------------------------------------------
-// compute (compile time) the log2 of a number
 
 function FloorLog2(n) {
   return (n==0) ? -1 : (1 + FloorLog2(n>>1));
@@ -12,7 +11,7 @@ function CeilLog2(n) {
 }
 
 //------------------------------------------------------------------------------
-// decompose an n-bit number into bits
+// decompose an n-bit number into bits (least significant bit first)
 
 template ToBits(n) {
   signal input  inp;
@@ -44,11 +43,11 @@ template IsZero() {
   out <== 1 - inp * inv;
 
   // enfore that either `inp` or `out` must be zero
-  inp*out === 0;             
+  inp*out === 0;
 }
 
 //------------------------------------------------------------------------------
-// check equality of two field elements; that is, computes `(A==B) ? 1 : 0` 
+// check equality of two field elements; that is, computes `(A==B) ? 1 : 0`
 
 template IsEqual() {
   signal input  A,B;

@@ -1,10 +1,8 @@
 pragma circom 2.0.0;
 
-include "poseidon2_perm.circom";
 include "poseidon2_hash.circom";
 
 include "merkle.circom";
-include "misc.circom";
 
 //------------------------------------------------------------------------------
 

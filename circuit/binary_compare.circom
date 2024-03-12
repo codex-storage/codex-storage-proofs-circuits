@@ -3,8 +3,9 @@ pragma circom 2.0.0;
 //------------------------------------------------------------------------------
 
 //
-// given two numbers in `n`-bit binary decomposition (little-endian), we compute 
-//             
+// given two numbers in `n`-bit binary decomposition
+// (least significant bit first), we compute
+//
 //             /  -1   if   A <  B
 //   out  :=  {    0   if   A == B
 //             \  +1   if   A >  B
@@ -12,7 +13,7 @@ pragma circom 2.0.0;
 // NOTE: we don't check that the digits are indeed binary;
 //       that's the responsibility of the caller!
 //
-// This version uses `(3*n-1)` nonlinear constraints. 
+// This version uses `(3*n-1)` nonlinear constraints.
 // Question: can we do better? (note that this has to work with n >= 254 digits too!)
 //
 
@@ -42,11 +43,11 @@ template BinaryCompare(n) {
 //------------------------------------------------------------------------------
 
 //
-// given two numbers in `n`-bit binary decomposition (little-endian), we compute 
+// given two numbers in `n`-bit binary decomposition (little-endian), we compute
 //
 //   out  :=  (A <= B) ? 1 : 0
 //
-// NOTE: we don't check that the digits are indeed binary; 
+// NOTE: we don't check that the digits are indeed binary;
 //       that's the responsibility of the caller!
 //
 
@@ -69,11 +70,11 @@ template BinaryLessOrEqual(n) {
 //------------------------------------------------------------------------------
 
 //
-// given two numbers in `n`-bit binary decomposition (little-endian), we compute 
+// given two numbers in `n`-bit binary decomposition (little-endian), we compute
 //
 //   out  :=  (A >= B) ? 1 : 0
 //
-// NOTE: we don't check that the digits are indeed binary; 
+// NOTE: we don't check that the digits are indeed binary;
 //       that's the responsibility of the caller!
 //
 

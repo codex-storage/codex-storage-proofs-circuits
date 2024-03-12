@@ -1,7 +1,6 @@
 pragma circom 2.0.0;
 
 include "poseidon2_perm.circom";
-include "poseidon2_hash.circom";
 
 include "misc.circom";
 
@@ -15,7 +14,7 @@ include "misc.circom";
 //
 // inputs and outputs:
 //  - leaf:        the leaf hash
-//  - pathBits:    the linear index of the leaf, in binary decomposition (little-endian)
+//  - pathBits:    the linear index of the leaf, in binary decomposition (least significant bit first)
 //  - lastBits:    the index of the last leaf (= nLeaves-1), in binary decomposition
 //  - maskBits:    the bits of the the mask `2^ceilingLog2(size) - 1`
 //  - merklePath:  the Merkle inclusion proof (required hashes, starting from the leaf and ending near the root)
@@ -26,7 +25,7 @@ include "misc.circom";
 //
 
 template RootFromMerklePath( maxDepth ) {
-  
+
   signal input  leaf;
   signal input  pathBits[ maxDepth ];       // bits of the linear index
   signal input  lastBits[ maxDepth ];       // bits of the last linear index `= size-1`
@@ -38,14 +37,17 @@ template RootFromMerklePath( maxDepth ) {
   signal aux[ maxDepth+1 ];
   aux[0] <== leaf;
 
-  // compute which prefixes (in big-endian) of the index is 
-  // the same as the corresponding prefix of the last index
+  // Determine whether nodes from the path are last in their row and are odd,
+  // by computing which binary prefixes of the index are the same as the
+  // corresponding prefix of the last index.
+  // This is done in reverse bit order, because pathBits and lastBits have the
+  // least significant bit first.
   component eq[ maxDepth ];
   signal isLast[ maxDepth+1 ];
   isLast[ maxDepth ] <== 1;
   for(var i=maxDepth-1; i>=0; i--) {
     eq[i] = IsEqual();
-    eq[i].A <== pathBits[i]; 
+    eq[i].A <== pathBits[i];
     eq[i].B <== lastBits[i];
     isLast[i] <== isLast[i+1] * eq[i].out;
   }
@@ -64,7 +66,7 @@ template RootFromMerklePath( maxDepth ) {
     var R = merklePath[i];
 
     // based on pathBits[i], we switch or not
-    
+
     switch[i]      <== (R-L) * pathBits[i];
     comp[i].key    <== bottom + 2*odd;
     comp[i].inp[0] <== L + switch[i];

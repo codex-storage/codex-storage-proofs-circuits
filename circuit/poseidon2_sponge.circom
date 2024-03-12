@@ -17,10 +17,10 @@ function min(a,b) {
 //   c = capacity (1 or 2)
 //   r = rate = t - c
 //
-// everything is measured in number of field elements 
+// everything is measured in number of field elements
 //
 // we use the padding `10*` from the original Poseidon paper,
-// and initial state constant zero. Note that this is different 
+// and initial state constant zero. Note that this is different
 // from the "SAFE padding" recommended in the Poseidon2 paper
 // (which uses `0*` padding and a nontrivial initial state)
 //
@@ -47,7 +47,7 @@ template PoseidonSponge(t, capacity, input_len, output_len) {
   signal padded[padded_len];
   for(var i=0; i<input_len; i++) { padded[i] <== inp[i]; }
   padded[input_len   ] <== 1;
-  for(var i=input_len+1; i<padded_len; i++) { padded[i] <== 0; } 
+  for(var i=input_len+1; i<padded_len; i++) { padded[i] <== 0; }
 
   signal state [nblocks+nout][t   ];
   signal sorbed[nblocks     ][rate];
@@ -58,7 +58,7 @@ template PoseidonSponge(t, capacity, input_len, output_len) {
 
   // initialize state
   for(var i=0; i<t-1; i++) { state[0][i] <== 0; }
-  state[0][t-1] <== civ; 
+  state[0][t-1] <== civ;
 
   component absorb [nblocks];
   component squeeze[nout-1];
@@ -70,7 +70,7 @@ template PoseidonSponge(t, capacity, input_len, output_len) {
       var b = padded[m*rate+i];
       sorbed[m][i] <== a + b;
     }
- 
+
     absorb[m] = Permutation();
     for(var j=0   ; j<rate; j++) { absorb[m].inp[j] <== sorbed[m][j]; }
     for(var j=rate; j<t   ; j++) { absorb[m].inp[j] <== state [m][j]; }
