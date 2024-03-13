@@ -9,7 +9,7 @@ import CircuitCommon
 -- global parameters
 
 circomFile :: FilePath
-circomFile = circuitSourceDir </> "extract_bits.circom"
+circomFile = circuitLibSourceDir </> "extract_bits.circom"
 
 -- | extracting the lowest @n@-bit of the canonical representation of a field element
 type GP = Int

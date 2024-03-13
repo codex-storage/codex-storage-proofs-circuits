@@ -14,7 +14,8 @@ ${NIMCLI_DIR}/cli $CLI_ARGS -v --circom=${CIRCUIT_MAIN}.circom
 
 # --- compile the circuit ---
 
-time circom --r1cs --wasm --O2 -l${CIRCUIT_DIR} ${CIRCUIT_MAIN}.circom
+CIRCUIT_INCLUDES="-l${CIRCUIT_LIB_DIR} -l${CIRCUIT_POS_DIR} -l${CIRCUIT_PRF_DIR}"
+time circom --r1cs --wasm --O2 ${CIRCUIT_INCLUDES} ${CIRCUIT_MAIN}.circom
 
 # --- circuit specific setup ---
 

@@ -3,8 +3,12 @@
 ORIG=`pwd`
 
 NIMCLI_DIR="${ORIG}/../reference/nim/proof_input/"
-CIRCUIT_DIR="${ORIG}/../circuit/"
 PTAU_DIR="${ORIG}/../ceremony"
+
+CIRCUIT_ROOT="${ORIG}/../circuit/"
+CIRCUIT_PRF_DIR="${CIRCUIT_ROOT}/codex/"
+CIRCUIT_POS_DIR="${CIRCUIT_ROOT}/poseidon2/"
+CIRCUIT_LIB_DIR="${CIRCUIT_ROOT}/lib/"
 
 PTAU_FILE="powersOfTau28_hez_final_21.ptau"
 PTAU_PATH="${PTAU_DIR}/${PTAU_FILE}"
