@@ -131,6 +131,10 @@ Or using `rapidsnark` (fast, but not very portable):
 
     $ rapidsnark proof_main.zkey witness.wtns proof.json public.json
 
+Or using `nim-groth16` (experimental):
+
+    $ nim-groth16 -p -z=proof_main.zkey -w=witness.wtns -o=proof.json -i=public.json
+    
 The output of this step will consist of:
 
 - `proof.json` containing the proof itself
