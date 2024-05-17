@@ -14,7 +14,7 @@ To run the full workflow:
 NOTE: the examples below assume `bash`. In particular, it won't work with `zsh` 
 (which is the dafault on newer macOS)! Because, you know, reasons...
 
-To have an overview of what all the different steps and files are, see [PROOFS.md].
+To have an overview of what all the different steps and files are, see [PROOFS.md](PROOFS.md).
 
 ### Some measurements
 
