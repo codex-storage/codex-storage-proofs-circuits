@@ -25,6 +25,7 @@ cd ${ORIG}/build
 # --- create the proof ---
 
 PROVER="snarkjs"
+# PROVER="nim"
 
 RS=`which rapidsnark`
 if [[ ! -z "$RS" ]]
@@ -41,6 +42,9 @@ case $PROVER in
     ;;
   rapidsnark)
     time rapidsnark ${CIRCUIT_MAIN}.zkey witness.wtns proof.json public.json
+    ;;
+  nim)
+    time nim-groth16 -tpv --zkey=${CIRCUIT_MAIN}.zkey --wtns=witness.wtns -o=proof.json -i=public.json
     ;;
   *)
     echo "unknown prover \`$PROVER\`"
