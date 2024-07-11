@@ -50,6 +50,17 @@ template RootFromMerklePath( maxDepth ) {
   signal input  merklePath[ maxDepth ];
   signal output recRoot;
 
+  // in case of a singleton tree, we receive maskBits = [0,0,0,...,0]
+  // but what we really need is [1,0,0,0,...,0]
+  // maybe it's the best to fix that here
+  //
+  // this is a bit of hackish, but because we always expect [1,1,...,1,0,0,...,0] anyway,
+  // we can just set the first entry to 1 and that should fix this issue.
+  //
+  signal maskBitsCorrected[ maxDepth + 1];
+  maskBitsCorrected[0] <== 1;
+  for(var i=1; i<=maxDepth; i++) { maskBitsCorrected[i] <== maskBits[i]; }
+
   // the sequence of reconstructed hashes along the path
   signal aux[ maxDepth+1 ];
   aux[0] <== leaf;
@@ -96,7 +107,7 @@ template RootFromMerklePath( maxDepth ) {
   var sum = 0;
   signal prods[maxDepth];
   for(var i=0; i<maxDepth; i++) {
-    prods[i] <== (maskBits[i] - maskBits[i+1]) * aux[i+1];
+    prods[i] <== (maskBitsCorrected[i] - maskBitsCorrected[i+1]) * aux[i+1];
     sum += prods[i];
   }
   recRoot <== sum;

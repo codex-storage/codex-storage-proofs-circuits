@@ -75,6 +75,19 @@ template SampleAndProve( maxDepth, maxLog2NSlots, blockTreeDepth, nFieldElemsPer
   signal input merklePaths[nSamples][maxDepth];          // private input
 
   // -------------------------------------------------------
+  // sanity check for singleton trees
+  // we don't have to do anything here, it's fixed in `merkle.circom`
+
+  // component eqsing = IsEqual();
+  // eqsing.A <== nCellsPerSlot;
+  // eqsing.B <== (1<<blockTreeDepth);     // normally 32
+  // signal slotTreeIsSingleton <== eqsing.out;
+
+log("block tree (bottom) is singleton = ", blockTreeDepth == 0 );
+log("slot tree (middle)  is singleton = ", nCellsPerSlot == (1<<blockTreeDepth) );
+log("dataset tree (top)  is singleton = ", nSlotsPerDataSet == 1 );
+
+  // -------------------------------------------------------
   //
   // first we prove the inclusion of the slot root in the dataset-level
   // (small) Merkle tree
@@ -125,11 +138,11 @@ log("top root check = ", mtop.recRoot == dataSetRoot);
     calci[cnt].counter          <== cnt + 1;
     calci[cnt].indexBits        ==> prove[cnt].indexBits;
 
-    prove[cnt].slotRoot   <== slotRoot;
-    prove[cnt].lastBits   <== lastBits;
-    prove[cnt].maskBits   <== lg.mask;
-    prove[cnt].data       <== cellData[cnt];
-    prove[cnt].merklePath <== merklePaths[cnt];
+    prove[cnt].slotRoot     <== slotRoot;
+    prove[cnt].lastBits     <== lastBits;
+    prove[cnt].maskBits     <== lg.mask;
+    prove[cnt].data         <== cellData[cnt];
+    prove[cnt].merklePath   <== merklePaths[cnt];
 
   }
 }
