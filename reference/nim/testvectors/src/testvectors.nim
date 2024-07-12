@@ -53,7 +53,7 @@ proc testVectorsMerkle() =
   echo "-----------------------------------------------------"
   for n in 1..40:
     let input : seq[F] = collect( newSeq , (for i in 1..n: toF(i)) )
-    let root = merkleRoot(input)
+    let root = Merkle.digest(input)
     echo( "Merkle root of [1.." & ($n) & "] : seq[F] =  " & toDecimal(root) )
 
   echo ""
@@ -61,7 +61,7 @@ proc testVectorsMerkle() =
   echo "--------------------------------------------------------"
   for n in 0..80:
     let input : seq[byte] = collect( newSeq , (for i in 1..n: byte(i)) )
-    let root = merkleRoot(input)
+    let root = Merkle.digest(input)
     echo( "Merkle root of [1.." & ($n) & "] : seq[byte] =  " & toDecimal(root) )
 
 #-------------------------------------------------------------------------------

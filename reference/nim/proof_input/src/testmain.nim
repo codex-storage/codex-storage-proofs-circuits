@@ -6,6 +6,7 @@ import constantine/math/arithmetic
 
 import poseidon2/types
 import poseidon2/merkle
+import poseidon2/io
 
 import types
 import blocks
@@ -20,7 +21,7 @@ import json
 
 proc testMerkleProofs*( input: seq[F] ) = 
   let tree = merkleTree(input)
-  let root = merkleRoot(input)
+  let root = Merkle.digest(input)
   assert( bool(root == treeRoot(tree)) )
 
   let n  = input.len

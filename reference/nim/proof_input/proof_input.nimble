@@ -7,5 +7,5 @@ srcDir        = "src"
 bin           = @["cli","testmain"]
 
 requires "nim >= 1.6.0"
-requires "https://github.com/mratsim/constantine"
-requires "https://github.com/codex-storage/nim-poseidon2#9be7b0c134e64e3d57a38520a32af93a55a37c44"
+requires "https://github.com/mratsim/constantine#ab6fa6ae1bbbd1b10071a92ec209b381b5d82511"
+requires "https://github.com/codex-storage/nim-poseidon2#8a54c69032a741160bbc097d009e45a8b5e4d718"
