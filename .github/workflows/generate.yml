@@ -65,22 +65,22 @@ jobs:
     timeout-minutes: 360
     steps:
       - name: Checkout sources
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Setup Circom
-        uses: baptiste0928/cargo-install@v2
+        uses: baptiste0928/cargo-install@v3
         with:
           cache-key: 'invalid-cache-please'
           crate: circom
           git: https://github.com/iden3/circom.git
 
       - name: Setup Nim
-        uses: jiro4989/setup-nim-action@v1
+        uses: jiro4989/setup-nim-action@v2
         with:
           nim-version: ${{ env.nim_version }}
 
       - name: Setup Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: ${{ env.nodejs_version }}
 
@@ -154,7 +154,7 @@ jobs:
           download_url: ${{ format('{0}/{1}', env.storage_url, env.storage_file) }}
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: circuit-assets
           path: workflow/build
