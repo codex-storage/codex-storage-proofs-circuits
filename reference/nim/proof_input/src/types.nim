@@ -106,11 +106,39 @@ type
     cellSize*      : int      # size of the cells we prove (2048)
     blockSize*     : int      # size of the network block (65536)
 
+  HashConfig* = object
+    field*   : FieldSelect
+    hashFun* : HashSelect
+    
+  FieldSelect* = enum
+    BN254,
+    Goldilocks
+
+  HashSelect* = enum
+    Poseidon2,
+    Monolith
+
 #-------------------------------------------------------------------------------
 
 func cellsPerBlock*(glob: GlobalConfig): int = 
   let k = (glob.blockSize div glob.cellSize)
   assert( k * glob.cellSize == glob.blockSize , "block size is not divisible by cell size" )
   return k
+
+#-------------------------------------------------------------------------------
+
+func parseField*(str0: string): FieldSelect =
+  let str = strutils.toLowerAscii(str0)
+  case str:
+    of "bn254":      return BN254
+    of "goldilocks": return Goldilocks
+    else: raiseAssert("parsefield: unrecognized field `" & str0 & "`")
+
+func parseHashFun*(str0: string): HashSelect =
+  let str = strutils.toLowerAscii(str0)
+  case str:
+    of "poseidon2":  return Poseidon2
+    of "monolith":   return Monolith
+    else: raiseAssert("parsefield: unrecognized hash function `" & str0 & "`")
 
 #-------------------------------------------------------------------------------

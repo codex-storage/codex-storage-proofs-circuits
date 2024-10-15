@@ -26,6 +26,7 @@ import misc
 #-------------------------------------------------------------------------------
 
 type FullConfig = object
+  hashCfg:     HashConfig
   globCfg:     GlobalConfig
   dsetCfg:     DataSetConfig
   slotIndex:   int
@@ -34,11 +35,16 @@ type FullConfig = object
   circomFile:  string
   verbose:     bool
 
+const defHashCfg = 
+  HashConfig( field:   Goldilocks      # BN254
+            , hashFun: Poseidon2
+            )
+
 const defGlobCfg = 
   GlobalConfig( maxDepth:       32
               , maxLog2NSlots:  8
               , cellSize:       2048
-              , blockSize:      65536          
+              , blockSize:      65536
               )
 
 const defDSetCfg = 
@@ -49,7 +55,8 @@ const defDSetCfg =
                )
 
 const defFullCfg =
-  FullConfig( globCfg:    defGlobCfg
+  FullConfig( hashCfg:    defHashCfg
+            , globCfg:    defGlobCfg
             , dsetCfg:    defDSetCfg
             , slotIndex:  0
             , outFile:    ""
@@ -81,6 +88,8 @@ proc printHelp() =
   echo " -K, --ncells     = <ncells>        : number of cells inside this slot (eg. 1024; must be a power of two)"
   echo " -o, --output     = <input.json>    : the JSON file into which we write the proof input"
   echo " -C, --circom     = <main.circom>   : the circom main component to create with these parameters"
+  echo " -F, --field      = <field>         : the underlying field: \"bn254\" or \"goldilocks\""
+  echo " -H, --hash       = <hash>          : the hash function to use: \"poseidon2\" or \"monolith\""
   echo ""
 
   quit()
@@ -91,6 +100,7 @@ proc parseCliOptions(): FullConfig =
 
   var argCtr: int = 0
 
+  var hashCfg = defHashCfg
   var globCfg = defGlobCfg
   var dsetCfg = defDSetCfg
   var fullCfg = defFullCfg
@@ -123,6 +133,8 @@ proc parseCliOptions(): FullConfig =
       of "K", "ncells"    : dsetCfg.ncells        = checkPowerOfTwo(parseInt(value),"nCells")
       of "o", "output"    : fullCfg.outFile       = value
       of "C", "circom"    : fullCfg.circomFile    = value
+      of "F", "field"     : hashCfg.field         = parseField(value)
+      of "H", "hash"      : hashCfg.hashFun       = parseHashFun(value)
       else:
         echo "Unknown option: ", key
         echo "use --help to get a list of options"
@@ -131,6 +143,7 @@ proc parseCliOptions(): FullConfig =
     of cmdEnd:
       discard  
 
+  fullCfg.hashCfg = hashCfg
   fullCfg.globCfg = globCfg
   fullCfg.dsetCfg = dsetCfg
 
@@ -140,9 +153,12 @@ proc parseCliOptions(): FullConfig =
 
 proc printConfig(fullCfg: FullConfig) =
 
+  let hashCfg = fullCfg.hashCfg
   let globCfg = fullCfg.globCfg
   let dsetCfg = fullCfg.dsetCfg
 
+  echo "field      = " & ($hashCfg.field)
+  echo "hash func. = " & ($hashCfg.hashFun)
   echo "maxDepth   = " & ($globCfg.maxDepth)
   echo "maxSlots   = " & ($pow2(globCfg.maxLog2NSlots))
   echo "cellSize   = " & ($globCfg.cellSize)
@@ -186,7 +202,7 @@ when isMainModule:
     printConfig(fullCfg)
 
   if fullCfg.circomFile == "" and fullCfg.outFile == "":
-    echo "nothing do!"
+    echo "nothing to do!"
     echo "use --help for getting a list of options"
     quit()
 

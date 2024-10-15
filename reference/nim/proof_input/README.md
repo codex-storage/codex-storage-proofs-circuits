@@ -29,6 +29,8 @@ use real data.
      -K, --ncells     = <ncells>        : number of cells inside this slot (eg. 1024; must be a power of two)
      -o, --output     = <input.json>    : the JSON file into which we write the proof input
      -C, --circom     = <main.circom>   : the circom main component to create with these parameters
+     -F, --field      = <field>         : the underlying field: "bn254" or "goldilocks"
+     -H, --hash       = <hash>          : the hash function to use: "poseidon2" or "monolith"
 
 You can generate only the `.json` or only the `.circom` file, or both at the same 
 time.
