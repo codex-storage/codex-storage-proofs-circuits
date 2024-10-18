@@ -32,6 +32,8 @@ proc genFakeCell(globcfg: GlobalConfig, cfg: SlotConfig, seed: Seed, idx: CellId
   return cell
 
 #[
+-- original Haskell version:
+--
 genFakeCell :: SlotConfig -> Seed -> CellIdx -> CellData
 genFakeCell cfg (Seed seed) (CellIdx idx) = (mkCellData cfg $ B.pack list) where
   list = go (fromIntegral $ _cellSize cfg) 1 

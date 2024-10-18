@@ -7,20 +7,29 @@ import std/sequtils
 import std/os
 import std/parseopt
 
-import constantine/math/arithmetic
-
-import poseidon2/types
-import poseidon2/merkle
-import poseidon2/io
+# import constantine/math/arithmetic
+# 
+# import poseidon2/types
+# import poseidon2/merkle
+# import poseidon2/io
 
 import types
-import blocks
-import slot
-import dataset
-import sample
-import merkle
-import gen_input
-import json
+import types/bn254
+import types/goldilocks
+#import blocks/bn254
+#import blocks/goldilocks
+#import slot
+#import dataset
+#import sample
+#import sample/bn254
+#import sample/goldilocks
+#import merkle
+#import merkle/bn254
+#import merkle/goldilocks
+import gen_input/bn254
+import gen_input/goldilocks
+import json/bn254
+import json/goldilocks
 import misc
 
 #-------------------------------------------------------------------------------
@@ -38,6 +47,7 @@ type FullConfig = object
 const defHashCfg = 
   HashConfig( field:   Goldilocks      # BN254
             , hashFun: Poseidon2
+            , combo:   Goldilocks_Poseidon2
             )
 
 const defGlobCfg = 
@@ -143,6 +153,8 @@ proc parseCliOptions(): FullConfig =
     of cmdEnd:
       discard  
 
+  hashCfg.combo = toFieldHashCombo( hashCfg.field , hashCfg.hashFun )
+
   fullCfg.hashCfg = hashCfg
   fullCfg.globCfg = globCfg
   fullCfg.dsetCfg = dsetCfg
@@ -196,7 +208,7 @@ proc writeCircomMainComponent(fullCfg: FullConfig, fname: string) =
 when isMainModule:
 
   let fullCfg = parseCliOptions()
-  # echo fullCfg
+  let hashCfg = fullCfg.hashCfg
 
   if fullCfg.verbose:
     printConfig(fullCfg)
@@ -212,7 +224,14 @@ when isMainModule:
 
   if fullCfg.outFile != "":
     echo "writing proof input into `" & fullCfg.outFile & "`..."
-    let prfInput = generateProofInput( fullCfg.globCfg, fullCfg.dsetCfg, fullCfg.slotIndex, toF(fullCfg.entropy) )
-    exportProofInput( fullCfg.outFile , prfInput )
+    case hashCfg.field
+      of BN254:
+        let entropy  = intToBN254(fullCfg.entropy) 
+        let prfInput = generateProofInputBN254( hashCfg, fullCfg.globCfg, fullCfg.dsetCfg, fullCfg.slotIndex, entropy )
+        exportProofInputBN254( hashCfg, fullCfg.outFile , prfInput )
+      of Goldilocks:
+        let entropy  = intToDigest(fullCfg.entropy) 
+        let prfInput = generateProofInputGoldilocks( hashCfg, fullCfg.globCfg, fullCfg.dsetCfg, fullCfg.slotIndex, entropy )
+        exportProofInputGoldilocks( hashCfg, fullCfg.outFile , prfInput )
 
   echo "done"
