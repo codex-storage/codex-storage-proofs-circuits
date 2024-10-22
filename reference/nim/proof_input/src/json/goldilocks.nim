@@ -20,16 +20,23 @@ func bytesToFieldElements( bytes: openArray[byte] ): seq[F] =
   let digests = padAndDecodeBytesToDigest62(bytes)
   return digestSeqToFeltSeq(digests)
 
+func bytesToFieldElementsMat( bytes: openArray[byte] ): seq[seq[F]] = 
+  let digests = padAndDecodeBytesToDigest62(bytes)
+  return digestSeqToFeltSeqSeq(digests)
+
 #-------------------------------------------------------------------------------
 
 proc writeFieldElems(h: Stream, prefix: string, xs: seq[F]) = 
-  writeList[F]( h, prefix, xs, writeF )
+  writeList[F]( h, prefix, xs, writeLnF )
+
+proc writeFieldElemsMat(h: Stream, prefix: string, xs: seq[seq[F]]) = 
+  writeListList[F]( h, prefix, xs, writeF )
 
 #-------------------------------------------------------------------------------
 
 proc writeSingleCellData(h: Stream, prefix:string , cell: Cell) = 
-  let flds : seq[F] = bytesToFieldElements(cell)    # cell.elements(F).toSeq()
-  writeFieldElems(h, prefix, flds)
+  let flds : seq[seq[F]] = bytesToFieldElementsMat(cell)   
+  writeFieldElemsMat(h, prefix, flds)
 
 proc writeAllCellData(h: Stream, cells: seq[Cell]) = 
   writeList(h, "    ", cells, writeSingleCellData )
@@ -37,8 +44,8 @@ proc writeAllCellData(h: Stream, cells: seq[Cell]) =
 #-------------------------------------------------------------------------------
 
 proc writeSingleMerklePath(h: Stream, prefix: string, path: MerkleProof[Digest]) = 
-  let flds : seq[F] = digestSeqToFeltSeq( path.merklePath )
-  writeFieldElems(h, prefix, flds)
+  let flds : seq[seq[F]] = digestSeqToFeltSeqSeq( path.merklePath )
+  writeFieldElemsMat(h, prefix, flds)
 
 proc writeAllMerklePaths(h: Stream, paths: seq[MerkleProof[Digest]]) = 
   writeList(h, "    ", paths, writeSingleMerklePath )

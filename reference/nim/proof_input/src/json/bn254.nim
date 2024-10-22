@@ -17,7 +17,7 @@ import shared
 #-------------------------------------------------------------------------------
 
 proc writeFieldElems(h: Stream, prefix: string, xs: seq[F]) = 
-  writeList[F]( h, prefix, xs, writeF )
+  writeList[F]( h, prefix, xs, writeLnF )
 
 #-------------------------------------------------------------------------------
 

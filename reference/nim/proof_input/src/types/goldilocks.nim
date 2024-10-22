@@ -23,8 +23,11 @@ func toQuotedDecimalF*(x: F): string =
   let s : string = toDecimalF(x)
   return ("\"" & s & "\"")
 
-proc writeF*(h: Stream, prefix: string, x: F) =
+proc writeLnF*(h: Stream, prefix: string, x: F) =
   h.writeLine(prefix & toQuotedDecimalF(x))
+
+proc writeF*(h: Stream, prefix: string, x: F) =
+  h.write(prefix & toQuotedDecimalF(x))
 
 #-------------------------------------------------------------------------------
 
@@ -38,7 +41,9 @@ func extractLowBits*(fld: F, k: int): uint64 =
 
 func digestToJsonString*( d: Digest ): string = 
   let xs: F4 = fromDigest(d) 
-  return "[ " & toDecimalF(xs[0]) & ", " &
-                toDecimalF(xs[1]) & ", " &
-                toDecimalF(xs[2]) & ", " &
-                toDecimalF(xs[3]) & " ]"
+  return "[ " & toQuotedDecimalF(xs[0]) & ", " &
+                toQuotedDecimalF(xs[1]) & ", " &
+                toQuotedDecimalF(xs[2]) & ", " &
+                toQuotedDecimalF(xs[3]) & " ]"
+
+#-------------------------------------------------------------------------------

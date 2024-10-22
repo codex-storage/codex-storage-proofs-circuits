@@ -36,8 +36,11 @@ func toQuotedDecimalF*(x: F): string =
   let s : string = toDecimalF(x)
   return ("\"" & s & "\"")
 
-proc writeF*(h: Stream, prefix: string, x: F) =
+proc writeLnF*(h: Stream, prefix: string, x: F) =
   h.writeLine(prefix & toQuotedDecimalF(x))
+
+proc writeF*(h: Stream, prefix: string, x: F) =
+  h.write(prefix & toQuotedDecimalF(x))
 
 #-------------------------------------------------------------------------------
 
