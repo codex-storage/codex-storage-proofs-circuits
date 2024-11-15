@@ -13,7 +13,9 @@ CLI_ARGS="--depth=$MAXDEPTH \
  --seed=$SEED \
  --nslots=$NSLOTS \
  --ncells=$NCELLS \
- --index=$SLOTINDEX"
+ --index=$SLOTINDEX \
+ --field=bn254 \
+ --hash=poseidon2"
 
 if [[ "$1" == "--export" ]]
 then
