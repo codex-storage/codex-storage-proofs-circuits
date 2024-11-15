@@ -44,7 +44,7 @@ And with 100 samples:
 
 - compiling: 76 seconds
 - circuit-specific setup: ~1050 seconds
-- `.zkey` file
+- `.zkey` file: 1050 megabytes
 - generating the witness (WASM): 2.3 seconds
 - proving with `snarkjs`: 76 seconds
 - proving wiht `zikkurat` (single threaded!): 102 seconds
