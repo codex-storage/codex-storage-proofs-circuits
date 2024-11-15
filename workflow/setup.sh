@@ -14,8 +14,13 @@ ${NIMCLI_DIR}/cli $CLI_ARGS -v --circom=${CIRCUIT_MAIN}.circom
 
 # --- compile the circuit ---
 
+echo ""
+start=`date +%s`
 CIRCUIT_INCLUDES="-l${CIRCUIT_LIB_DIR} -l${CIRCUIT_POS_DIR} -l${CIRCUIT_PRF_DIR}"
-time circom --r1cs --wasm --O2 ${CIRCUIT_INCLUDES} ${CIRCUIT_MAIN}.circom
+circom --r1cs --wasm --O2 ${CIRCUIT_INCLUDES} ${CIRCUIT_MAIN}.circom
+end=`date +%s`
+echo "Compiling the circuit took `expr $end - $start` seconds."
+echo ""
 
 # --- circuit specific setup ---
 

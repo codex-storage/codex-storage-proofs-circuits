@@ -7,25 +7,35 @@ import std/sequtils
 import std/os
 import std/parseopt
 
-import constantine/math/arithmetic
-
-import poseidon2/types
-import poseidon2/merkle
-import poseidon2/io
+# import constantine/math/arithmetic
+# 
+# import poseidon2/types
+# import poseidon2/merkle
+# import poseidon2/io
 
 import types
-import blocks
-import slot
-import dataset
-import sample
-import merkle
-import gen_input
-import json
+import types/bn254
+import types/goldilocks
+#import blocks/bn254
+#import blocks/goldilocks
+#import slot
+#import dataset
+#import sample
+#import sample/bn254
+#import sample/goldilocks
+#import merkle
+#import merkle/bn254
+#import merkle/goldilocks
+import gen_input/bn254
+import gen_input/goldilocks
+import json/bn254
+import json/goldilocks
 import misc
 
 #-------------------------------------------------------------------------------
 
 type FullConfig = object
+  hashCfg:     HashConfig
   globCfg:     GlobalConfig
   dsetCfg:     DataSetConfig
   slotIndex:   int
@@ -34,11 +44,17 @@ type FullConfig = object
   circomFile:  string
   verbose:     bool
 
+const defHashCfg = 
+  HashConfig( field:   Goldilocks      # BN254
+            , hashFun: Poseidon2
+            , combo:   Goldilocks_Poseidon2
+            )
+
 const defGlobCfg = 
   GlobalConfig( maxDepth:       32
               , maxLog2NSlots:  8
               , cellSize:       2048
-              , blockSize:      65536          
+              , blockSize:      65536
               )
 
 const defDSetCfg = 
@@ -49,7 +65,8 @@ const defDSetCfg =
                )
 
 const defFullCfg =
-  FullConfig( globCfg:    defGlobCfg
+  FullConfig( hashCfg:    defHashCfg
+            , globCfg:    defGlobCfg
             , dsetCfg:    defDSetCfg
             , slotIndex:  0
             , outFile:    ""
@@ -81,6 +98,8 @@ proc printHelp() =
   echo " -K, --ncells     = <ncells>        : number of cells inside this slot (eg. 1024; must be a power of two)"
   echo " -o, --output     = <input.json>    : the JSON file into which we write the proof input"
   echo " -C, --circom     = <main.circom>   : the circom main component to create with these parameters"
+  echo " -F, --field      = <field>         : the underlying field: \"bn254\" or \"goldilocks\""
+  echo " -H, --hash       = <hash>          : the hash function to use: \"poseidon2\" or \"monolith\""
   echo ""
 
   quit()
@@ -91,6 +110,7 @@ proc parseCliOptions(): FullConfig =
 
   var argCtr: int = 0
 
+  var hashCfg = defHashCfg
   var globCfg = defGlobCfg
   var dsetCfg = defDSetCfg
   var fullCfg = defFullCfg
@@ -123,6 +143,8 @@ proc parseCliOptions(): FullConfig =
       of "K", "ncells"    : dsetCfg.ncells        = checkPowerOfTwo(parseInt(value),"nCells")
       of "o", "output"    : fullCfg.outFile       = value
       of "C", "circom"    : fullCfg.circomFile    = value
+      of "F", "field"     : hashCfg.field         = parseField(value)
+      of "H", "hash"      : hashCfg.hashFun       = parseHashFun(value)
       else:
         echo "Unknown option: ", key
         echo "use --help to get a list of options"
@@ -131,6 +153,9 @@ proc parseCliOptions(): FullConfig =
     of cmdEnd:
       discard  
 
+  hashCfg.combo = toFieldHashCombo( hashCfg.field , hashCfg.hashFun )
+
+  fullCfg.hashCfg = hashCfg
   fullCfg.globCfg = globCfg
   fullCfg.dsetCfg = dsetCfg
 
@@ -140,9 +165,12 @@ proc parseCliOptions(): FullConfig =
 
 proc printConfig(fullCfg: FullConfig) =
 
+  let hashCfg = fullCfg.hashCfg
   let globCfg = fullCfg.globCfg
   let dsetCfg = fullCfg.dsetCfg
 
+  echo "field      = " & ($hashCfg.field)
+  echo "hash func. = " & ($hashCfg.hashFun)
   echo "maxDepth   = " & ($globCfg.maxDepth)
   echo "maxSlots   = " & ($pow2(globCfg.maxLog2NSlots))
   echo "cellSize   = " & ($globCfg.cellSize)
@@ -180,13 +208,13 @@ proc writeCircomMainComponent(fullCfg: FullConfig, fname: string) =
 when isMainModule:
 
   let fullCfg = parseCliOptions()
-  # echo fullCfg
+  let hashCfg = fullCfg.hashCfg
 
   if fullCfg.verbose:
     printConfig(fullCfg)
 
   if fullCfg.circomFile == "" and fullCfg.outFile == "":
-    echo "nothing do!"
+    echo "nothing to do!"
     echo "use --help for getting a list of options"
     quit()
 
@@ -196,7 +224,14 @@ when isMainModule:
 
   if fullCfg.outFile != "":
     echo "writing proof input into `" & fullCfg.outFile & "`..."
-    let prfInput = generateProofInput( fullCfg.globCfg, fullCfg.dsetCfg, fullCfg.slotIndex, toF(fullCfg.entropy) )
-    exportProofInput( fullCfg.outFile , prfInput )
+    case hashCfg.field
+      of BN254:
+        let entropy  = intToBN254(fullCfg.entropy) 
+        let prfInput = generateProofInputBN254( hashCfg, fullCfg.globCfg, fullCfg.dsetCfg, fullCfg.slotIndex, entropy )
+        exportProofInputBN254( hashCfg, fullCfg.outFile , prfInput )
+      of Goldilocks:
+        let entropy  = intToDigest(fullCfg.entropy) 
+        let prfInput = generateProofInputGoldilocks( hashCfg, fullCfg.globCfg, fullCfg.dsetCfg, fullCfg.slotIndex, entropy )
+        exportProofInputGoldilocks( hashCfg, fullCfg.outFile , prfInput )
 
   echo "done"

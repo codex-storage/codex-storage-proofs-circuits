@@ -2,4 +2,4 @@
 testmain
 cli
 *.json
-json/
+json_tmp/

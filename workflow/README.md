@@ -16,28 +16,47 @@ NOTE: the examples below assume `bash`. In particular, it won't work with `zsh`
 
 To have an overview of what all the different steps and files are, see [PROOFS.md](PROOFS.md).
 
-### Some measurements
+### Some benchmarks
 
-Approximate time to run this on an M2 (8+4 cores), with 10 samples:
+Approximate time to run this on an M2 macbook pro (8+4 cores), with 10 samples:
 
 - compiling the circuit: 8 seconds 
 - circuit-specific setup (with 1 contributor): 85 seconds
 - size of the `.zkey` file (only 1 contributor): 110 megabytes
+- generating the witness (WASM): 0.3 seconds
 - proving with `snarkjs` (slow): 7.7 seconds
+- proving wiht `zikkurat` (single threaded!): 13 seconds
+- proving with `arkworks`: 4.4 seconds (loading the zkey: 6 seconds)
+- proving with `nim-groth16` (old version): 2 seconds
 
 Same with 50 samples:
 
 - compiling: 37 seconds
-- circuit-specific setup: ~420 seconds
+- circuit-specific setup: ~430 seconds
 - `.zkey` file: 525 megabytes
-- snarkjs prove: 34 seconds
+- generating the witness (WASM): 1.2 seconds
+- proving with `snarkjs`: 36 seconds
+- proving wiht `zikkurat` (single threaded!): 52 seconds
+- proving with `arkworks`: 19.8 seconds (loading the zkey: 33 seconds)
+- proving with `nim-groth16` (old version): 9.4 seconds
 
 And with 100 samples:
-- compiling: 76 seconds
-- circuit-specific setup: ~1000 seconds
-- `.zkey` file
-- snarkjs prove: 76 seconds
 
+- compiling: 76 seconds
+- circuit-specific setup: ~1050 seconds
+- `.zkey` file
+- generating the witness (WASM): 2.3 seconds
+- proving with `snarkjs`: 76 seconds
+- proving wiht `zikkurat` (single threaded!): 102 seconds
+- proving with `arkworks`: 41 seconds (loading the zkey: 66 seconds)
+- proving with `nim-groth16` (old version): 18 seconds
+
+TODO: 
+
+- [x] add `arkworks` prover
+- [ ] add `rapidsnarks` prover (doesn't run on ARM...)
+- [ ] update `nim-groth16` to `constantine-0.1` (should be faster because no workarounds)
+- [ ] add multithreading to `zikkurat`
 
 ### Preliminaries
 
