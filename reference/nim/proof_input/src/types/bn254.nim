@@ -7,7 +7,7 @@ import
   constantine/math/arithmetic,
   constantine/math/io/io_fields,
   constantine/math/io/io_bigints,
-  constantine/math/config/curves 
+  constantine/named/algebras 
 
 #from constantine/math/io/io_fields import toDecimal
 
