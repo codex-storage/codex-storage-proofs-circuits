@@ -61,6 +61,7 @@ TODO:
 ### Preliminaries
 
 - install `circom`, `snarkjs`, `rapidsnark`: <https://docs.circom.io/getting-started/installation>
+- optionally install `circom-witnesscalc`: <https://github.com/iden3/circom-witnesscalc/>
 - install Nim: <https://nim-lang.org/>
 
 Build the Nim cli proof input generator:
@@ -105,7 +106,12 @@ After that, the first real step is to create the main component:
 
 Then compile the circuit:
 
-    $ circom --r1cs --wasm --O2 -l../../circuit proof_main.circom
+    $ export CIRCUIT_LIBDIRS="-l../../circuit/lib -l../../circuit/poseidon2 -l../../circuit/codex"
+    $ circom --r1cs --wasm --O2 ${CIRCUIT_LIBDIRS} proof_main.circom
+
+### Optionally extract the witness computation graph
+
+    $ build-circuit proof_main.circom proof_main_graph.bin ${CIRCUIT_LIBDIRS}
 
 ### Do the circuit-specific setup
 
