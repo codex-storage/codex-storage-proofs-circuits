@@ -6,7 +6,7 @@ module Main where
 
 --------------------------------------------------------------------------------
 
-import R1CS.Misc ( Verbosity(..) )
+import R1CS
 
 import qualified R1CS.Test.Spec as Spec
 
@@ -19,14 +19,14 @@ import qualified Circuit.CeilingLog2   as CeilingLog2
 
 --------------------------------------------------------------------------------
 
-testSimple :: IO ()
-testSimple = testSimple' Silent
+testSimple :: FieldChoice -> IO ()
+testSimple field = testSimple' field Silent
 
-testSimple' :: Verbosity -> IO ()
-testSimple' verbosity = do
+testSimple' :: FieldChoice -> Verbosity -> IO ()
+testSimple' field verbosity = runWithField field $ \pxy -> do
 
-  let runSpec     what = Spec.testSemantics     what verbosity
-  let runSpecMany what = Spec.testSemanticsMany what verbosity
+  let runSpec     what = Spec.testSemantics     pxy what verbosity
+  let runSpecMany what = Spec.testSemanticsMany pxy what verbosity
 
   runSpecMany CeilingLog2.specs
   runSpecMany Log2.specs
@@ -40,5 +40,5 @@ testSimple' verbosity = do
 --------------------------------------------------------------------------------
 
 main = do
-  testSimple' Silent   -- Info
+  testSimple' Field20 Silent   -- Info
 
