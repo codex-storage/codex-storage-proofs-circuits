@@ -69,6 +69,11 @@ jobs:
       - name: Checkout sources
         uses: actions/checkout@v4
 
+      - name: Install required packages
+        run: |
+          wget -qO- https://apt.llvm.org/llvm.sh | sudo bash -s -- 19
+          sudo apt-get update && sudo apt-get install -y protobuf-compiler
+
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@master
         with:
