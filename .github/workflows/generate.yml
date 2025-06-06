@@ -50,6 +50,7 @@ env:
   circuit_file: workflow/build/proof_main.zkey
   constraints_file: workflow/build/proof_main.r1cs
   wasm_file: workflow/build/proof_main_js/proof_main.wasm
+  bin_file: workflow/build/proof_main.bin
   verification_key_file: workflow/build/proof_main_verification_key.json
   archive_file: workflow/build/proof_circuit.tar.gz
   storage_url: https://circuit.codex.storage
@@ -104,7 +105,7 @@ jobs:
           mkdir -p workflow/build
           cd workflow/build
           ../../reference/nim/proof_input/cli $CLI_ARGS -v --circom="proof_main.circom"
-          circom --r1cs --wasm --O2 -l../../circuit/lib -l../../circuit/poseidon2 -l../../circuit/codex proof_main.circom
+          circom --r1cs --wasm --sym --wat --c --O2 -l../../circuit/lib -l../../circuit/poseidon2 -l../../circuit/codex proof_main.circom
 
       - name: Circuit setup
         run: |
@@ -138,7 +139,8 @@ jobs:
         run: |
           # Archive
           mkdir archive
-          mv ${{ env.circuit_file }} ${{ env.constraints_file }} ${{ env.wasm_file }} ${{ env.verification_key_file }} archive
+          ls -alR
+          mv ${{ env.circuit_file }} ${{ env.constraints_file }} ${{ env.wasm_file }} ${{ env.bin_file }} ${{ env.verification_key_file }} archive
           tar czvf ${{ env.archive_file }} -C archive .
           # Variables
           hash=($(shasum -a 256 ${{ env.archive_file }}))
