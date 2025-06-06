@@ -44,6 +44,7 @@ on:
 
 env:
   nim_version: 1.6.14
+  rust_version: 1.87.0
   nodejs_version: 18.15
   ceremony_source: https://storage.googleapis.com/zkevm/ptau/powersOfTau28_hez_final_21.ptau
   s3_bucket_path: proving-key
@@ -67,6 +68,11 @@ jobs:
     steps:
       - name: Checkout sources
         uses: actions/checkout@v4
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: ${{ env.rust_version }}
 
       - name: Setup Circom
         uses: baptiste0928/cargo-install@v3
