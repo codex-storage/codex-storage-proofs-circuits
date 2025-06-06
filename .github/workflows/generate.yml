@@ -75,6 +75,13 @@ jobs:
           crate: circom
           git: https://github.com/iden3/circom.git
 
+      - name: Setup Circom-witnesscalc
+        uses: baptiste0928/cargo-install@v3
+        with:
+          cache-key: 'invalid-cache-please'
+          crate: circom-witnesscalc
+          git: https://github.com/iden3/circom-witnesscalc.git
+
       - name: Setup Nim
         uses: jiro4989/setup-nim-action@v2
         with:
@@ -105,7 +112,8 @@ jobs:
           mkdir -p workflow/build
           cd workflow/build
           ../../reference/nim/proof_input/cli $CLI_ARGS -v --circom="proof_main.circom"
-          circom --r1cs --wasm --sym --wat --c --O2 -l../../circuit/lib -l../../circuit/poseidon2 -l../../circuit/codex proof_main.circom
+          circom --r1cs --wasm --O2 -l../../circuit/lib -l../../circuit/poseidon2 -l../../circuit/codex proof_main.circom
+          build-circuit proof_main.circom proof_main.bin -l../../circuit/lib -l../../circuit/poseidon2 -l../../circuit/codex proof_main.circom
 
       - name: Circuit setup
         run: |
